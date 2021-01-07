@@ -5,9 +5,7 @@ using System.Text.Json;
 namespace GameProject {
     public static class Utility {
         public static string RootPath => AppDomain.CurrentDomain.RelativeSearchPath ?? AppDomain.CurrentDomain.BaseDirectory;
-        public static string GetPath(string name) {
-            return Path.Combine(RootPath, name);
-        }
+        public static string GetPath(string name) => Path.Combine(RootPath, name);
         public static T LoadJson<T>(string name) where T : new() {
             T json;
 
