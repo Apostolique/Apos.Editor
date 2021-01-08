@@ -42,10 +42,28 @@ namespace GameProject {
             if (_quit.Pressed())
                 Exit();
 
+            UpdateCameraInput();
+
+            InputHelper.UpdateCleanup();
+            base.Update(gameTime);
+        }
+
+        protected override void Draw(GameTime gameTime) {
+            GraphicsDevice.Clear(Color.Black);
+
+            _s.Begin(transformMatrix: _camera.View());
+            _s.FillRectangle(new RectangleF(-50, -50, 100, 100), Color.White);
+            _s.End();
+
+            base.Draw(gameTime);
+        }
+
+        private void UpdateCameraInput() {
             int scrollDelta = InputHelper.NewMouse.ScrollWheelValue - InputHelper.OldMouse.ScrollWheelValue;
             if (scrollDelta != 0) {
                 Zoom = MathF.Max(Zoom - scrollDelta * 0.0005f, 0.1f);
             }
+
             if (Triggers.RotateLeft.Pressed()) {
                 _camera.Angle += MathHelper.PiOver4;
             }
@@ -66,19 +84,6 @@ namespace GameProject {
             if (_isDragging && Triggers.CameraDrag.Released()) {
                 _isDragging = false;
             }
-
-            InputHelper.UpdateCleanup();
-            base.Update(gameTime);
-        }
-
-        protected override void Draw(GameTime gameTime) {
-            GraphicsDevice.Clear(Color.Black);
-
-            _s.Begin(transformMatrix: _camera.View());
-            _s.FillRectangle(new RectangleF(-50, -50, 100, 100), Color.White);
-            _s.End();
-
-            base.Draw(gameTime);
         }
 
         GraphicsDeviceManager _graphics;
