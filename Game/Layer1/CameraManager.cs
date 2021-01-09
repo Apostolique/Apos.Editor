@@ -9,6 +9,10 @@ namespace GameProject {
             Camera = new Camera(new Vector2(0f, 0f), 0f, new Vector2(1f));
         }
 
+        public Camera Camera;
+        public Vector2 MouseWorld = Vector2.Zero;
+        public Matrix View => Camera.View();
+
         public void UpdateInput() {
             int scrollDelta = InputHelper.NewMouse.ScrollWheelValue - InputHelper.OldMouse.ScrollWheelValue;
             if (scrollDelta != 0) {
@@ -36,10 +40,6 @@ namespace GameProject {
                 _isDragging = false;
             }
         }
-
-        public Camera Camera;
-        public Vector2 MouseWorld = Vector2.Zero;
-        public Matrix View => Camera.View();
 
         float Zoom {
             get => MathF.Sqrt(Camera.ZFromScale(Camera.Scale.X, 0f));
