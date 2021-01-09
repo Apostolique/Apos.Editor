@@ -3,7 +3,6 @@ using Apos.Input;
 using Dcrew.Camera;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using MonoGame.Extended;
 
 namespace GameProject {
     public class GameRoot : Game {
@@ -30,8 +29,8 @@ namespace GameProject {
             _graphics.SynchronizeWithVerticalRetrace = settings.IsVSync;
             _graphics.ApplyChanges();
 
-            _camera = new Camera(new Vector2(0f, 0f), 0f, new Vector2(1f));
-            _selection = new Selection(_camera);
+            _camera = new CameraManager();
+            _selection = new Selection(_camera.Camera);
 
             InputHelper.Setup(this);
         }
@@ -42,8 +41,8 @@ namespace GameProject {
             if (Triggers.Quit.Pressed())
                 Exit();
 
-            UpdateCameraInput();
-            _selection.UpdateInput(_mouseWorld);
+            _camera.UpdateInput();
+            _selection.UpdateInput(_camera.MouseWorld);
 
             InputHelper.UpdateCleanup();
             base.Update(gameTime);
@@ -52,55 +51,17 @@ namespace GameProject {
         protected override void Draw(GameTime gameTime) {
             GraphicsDevice.Clear(Color.Black);
 
-            _s.Begin(transformMatrix: _camera.View());
+            _s.Begin(transformMatrix: _camera.View);
             _selection.Draw(_s);
             _s.End();
 
             base.Draw(gameTime);
         }
 
-        private void UpdateCameraInput() {
-            int scrollDelta = InputHelper.NewMouse.ScrollWheelValue - InputHelper.OldMouse.ScrollWheelValue;
-            if (scrollDelta != 0) {
-                Zoom = MathF.Max(Zoom - scrollDelta * 0.0005f, 0.1f);
-            }
-
-            if (Triggers.RotateLeft.Pressed()) {
-                _camera.Angle += MathHelper.PiOver4;
-            }
-            if (Triggers.RotateRight.Pressed()) {
-                _camera.Angle -= MathHelper.PiOver4;
-            }
-
-            _mouseWorld = _camera.ScreenToWorld(InputHelper.NewMouse.X, InputHelper.NewMouse.Y);
-
-            if (Triggers.CameraDrag.Pressed()) {
-                _dragAnchor = _mouseWorld;
-                _isDragging = true;
-            }
-            if (_isDragging && Triggers.CameraDrag.HeldOnly()) {
-                _camera.XY += _dragAnchor - _mouseWorld;
-                _mouseWorld = _dragAnchor;
-            }
-            if (_isDragging && Triggers.CameraDrag.Released()) {
-                _isDragging = false;
-            }
-        }
-
         GraphicsDeviceManager _graphics;
         SpriteBatch _s;
 
-        Camera _camera;
-        float Zoom {
-            get => MathF.Sqrt(_camera.ZFromScale(_camera.Scale.X, 0f));
-            set {
-                _camera.Scale = new Vector2(_camera.ScaleFromZ(value * value, 0f));
-            }
-        }
-        Vector2 _mouseWorld = Vector2.Zero;
-        Vector2 _dragAnchor = Vector2.Zero;
-        bool _isDragging = false;
-
+        CameraManager _camera;
         Selection _selection;
     }
 }
