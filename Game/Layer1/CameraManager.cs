@@ -16,7 +16,7 @@ namespace GameProject {
         public void UpdateInput() {
             int scrollDelta = InputHelper.NewMouse.ScrollWheelValue - InputHelper.OldMouse.ScrollWheelValue;
             if (scrollDelta != 0) {
-                Zoom = MathF.Max(Zoom - scrollDelta * 0.0005f, 0.1f);
+                Zoom = MathF.Min(MathF.Max(Zoom - scrollDelta * 0.001f, 0.2f), 4f);
             }
 
             if (Triggers.RotateLeft.Pressed()) {
@@ -42,9 +42,9 @@ namespace GameProject {
         }
 
         float Zoom {
-            get => MathF.Sqrt(Camera.ZFromScale(Camera.Scale.X, 0f));
+            get => MathF.Log(Camera.ZFromScale(Camera.Scale.X, 0f) + 1);
             set {
-                Camera.Scale = new Vector2(Camera.ScaleFromZ(value * value, 0f));
+                Camera.Scale = new Vector2(Camera.ScaleFromZ(MathF.Exp(value) - 1, 0f));
             }
         }
         Vector2 _dragAnchor = Vector2.Zero;
