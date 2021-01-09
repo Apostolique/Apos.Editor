@@ -17,5 +17,8 @@ namespace GameProject {
         public void Draw(SpriteBatch s) {
             s.FillRectangle(new RectangleF(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height), Color.Red * 0.7f);
         }
+        public void DrawHighlight(SpriteBatch s) {
+            s.DrawRectangle(new RectangleF(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height), Color.White * 0.7f, 2f * Camera.ScreenToWorldScale);
+        }
     }
 }

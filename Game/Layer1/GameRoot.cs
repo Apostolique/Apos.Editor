@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Apos.Input;
 using Dcrew.Spatial;
@@ -49,6 +49,7 @@ namespace GameProject {
             if (Triggers.CreateEntity.Pressed() && _selection.Rect != null) {
                 _quadtree.Add(new Entity(_selection.Rect.Value));
             }
+            _hoveredEntities = _quadtree.QueryPoint(Camera.MouseWorld.ToPoint());
 
             InputHelper.UpdateCleanup();
             base.Update(gameTime);
@@ -60,6 +61,8 @@ namespace GameProject {
             _s.Begin(transformMatrix: Camera.View);
             foreach (var e in _quadtree.QueryRect(Camera.WorldBounds, Camera.Angle, Camera.Origin))
                 e.Draw(_s);
+            foreach (var e in _hoveredEntities)
+                e.DrawHighlight(_s);
 
             _selection.Draw(_s);
             _s.End();
@@ -70,8 +73,9 @@ namespace GameProject {
         GraphicsDeviceManager _graphics;
         SpriteBatch _s;
 
-        CameraManager _camera;
         Selection _selection;
         Quadtree<Entity> _quadtree;
+
+        HashSet<Entity> _hoveredEntities = new HashSet<Entity>();
     }
 }
