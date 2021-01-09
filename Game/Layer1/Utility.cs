@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using MonoGame.Extended;
 
 namespace GameProject {
     public static class Utility {
@@ -23,6 +24,10 @@ namespace GameProject {
             }
 
             return json;
+        }
+
+        public static RectangleF ExpandRect(RectangleF r, float distance) {
+            return new RectangleF(r.X - distance, r.Y - distance, r.Width + distance * 2, r.Height + distance * 2);
         }
     }
 }
