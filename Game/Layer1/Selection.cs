@@ -10,12 +10,14 @@ namespace GameProject {
             _camera = camera;
         }
 
+        public RectangleF? Rect = null;
+
         public void Draw(SpriteBatch s) {
-            if (_selection != null) {
-                s.FillRectangle(Utility.ExpandRect(_selection.Value, _handleDistanceWorld), Color.White * 0.1f);
-                s.DrawRectangle(Utility.ExpandRect(_selection.Value, _handleDistanceWorld), Color.White * 0.5f, 1f / _camera.ScreenToWorldScale());
-                s.FillRectangle(_selection.Value, Color.White * 0.2f);
-                s.DrawRectangle(_selection.Value, Color.White * 0.5f, 1f / _camera.ScreenToWorldScale());
+            if (Rect != null) {
+                s.FillRectangle(Utility.ExpandRect(Rect.Value, _handleDistanceWorld), Color.White * 0.1f);
+                s.DrawRectangle(Utility.ExpandRect(Rect.Value, _handleDistanceWorld), Color.White * 0.5f, 1f / _camera.ScreenToWorldScale());
+                s.FillRectangle(Rect.Value, Color.White * 0.2f);
+                s.DrawRectangle(Rect.Value, Color.White * 0.5f, 1f / _camera.ScreenToWorldScale());
             }
         }
 
@@ -23,7 +25,7 @@ namespace GameProject {
             // TODO: Might be nice to do a minimum selection size threshold for it's area. (width * height > 900)
 
             // Use the current selection or create a new one.
-            RectangleF r = _selection ?? new RectangleF(mouseWorld.X, mouseWorld.Y, 0, 0);
+            RectangleF r = Rect ?? new RectangleF(mouseWorld.X, mouseWorld.Y, 0, 0);
             bool shouldCreate = false;
 
             float x1 = r.Left;
@@ -33,7 +35,7 @@ namespace GameProject {
 
             // Drag start
             if (Triggers.SelectionDrag.Pressed()) {
-                if (_selection == null) {
+                if (Rect == null) {
                     shouldCreate = canCreate;
                 }
 
@@ -152,8 +154,8 @@ namespace GameProject {
                 _dragHandle = DragHandle.None;
             }
 
-            if (_selection != null || shouldCreate) {
-                _selection = r;
+            if (Rect != null || shouldCreate) {
+                Rect = r;
             }
         }
 
@@ -167,7 +169,6 @@ namespace GameProject {
             Bottom = 1 << 4,
             Center = 1 << 5,
         }
-        RectangleF? _selection = null;
         DragHandle _dragHandle = DragHandle.None;
         float _handleDistance = 50f;
         float _handleDistanceWorld {
