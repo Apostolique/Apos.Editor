@@ -1,23 +1,20 @@
 using System;
-using Dcrew.Camera;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
 
 namespace GameProject {
     public class Selection {
-        public Selection(Camera camera) {
-            _camera = camera;
-        }
+        public Selection() { }
 
         public RectangleF? Rect = null;
 
         public void Draw(SpriteBatch s) {
             if (Rect != null) {
                 s.FillRectangle(Utility.ExpandRect(Rect.Value, _handleDistanceWorld), Color.White * 0.1f);
-                s.DrawRectangle(Utility.ExpandRect(Rect.Value, _handleDistanceWorld), Color.White * 0.5f, 1f / _camera.ScreenToWorldScale());
+                s.DrawRectangle(Utility.ExpandRect(Rect.Value, _handleDistanceWorld), Color.White * 0.5f, Camera.ScreenToWorldScale);
                 s.FillRectangle(Rect.Value, Color.White * 0.2f);
-                s.DrawRectangle(Rect.Value, Color.White * 0.5f, 1f / _camera.ScreenToWorldScale());
+                s.DrawRectangle(Rect.Value, Color.White * 0.5f, Camera.ScreenToWorldScale);
             }
         }
 
@@ -159,7 +156,6 @@ namespace GameProject {
             }
         }
 
-        Camera _camera;
         [Flags]
         enum DragHandle {
             None = 1 << 0,
@@ -172,7 +168,7 @@ namespace GameProject {
         DragHandle _dragHandle = DragHandle.None;
         float _handleDistance = 50f;
         float _handleDistanceWorld {
-            get => _handleDistance * Vector2.Distance(_camera.ScreenToWorld(0, 0, 0), _camera.ScreenToWorld(1, 0, 0));
+            get => _handleDistance * Camera.ScreenToWorldScale;
         }
         Vector2 _dragDiff = new Vector2();
     }

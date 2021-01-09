@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using Apos.Input;
 using Dcrew.Spatial;
 using Microsoft.Xna.Framework;
@@ -30,8 +31,8 @@ namespace GameProject {
             _graphics.ApplyChanges();
 
             _quadtree = new Quadtree<Entity>();
-            _camera = new CameraManager();
-            _selection = new Selection(_camera.Camera);
+            Camera.Setup();
+            _selection = new Selection();
 
             InputHelper.Setup(this);
         }
@@ -42,8 +43,8 @@ namespace GameProject {
             if (Triggers.Quit.Pressed())
                 Exit();
 
-            _camera.UpdateInput();
-            _selection.UpdateInput(_camera.MouseWorld);
+            Camera.UpdateInput();
+            _selection.UpdateInput(Camera.MouseWorld);
 
             if (Triggers.CreateEntity.Pressed() && _selection.Rect != null) {
                 _quadtree.Add(new Entity(_selection.Rect.Value));
@@ -56,9 +57,9 @@ namespace GameProject {
         protected override void Draw(GameTime gameTime) {
             GraphicsDevice.Clear(Color.Black);
 
-            _s.Begin(transformMatrix: _camera.View);
-            foreach (var n in _quadtree.QueryRect(_camera.Camera.WorldBounds(), _camera.Camera.Angle, _camera.Camera.Origin))
-                n.Draw(_s);
+            _s.Begin(transformMatrix: Camera.View);
+            foreach (var e in _quadtree.QueryRect(Camera.WorldBounds, Camera.Angle, Camera.Origin))
+                e.Draw(_s);
 
             _selection.Draw(_s);
             _s.End();
