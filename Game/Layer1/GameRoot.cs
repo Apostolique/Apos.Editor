@@ -160,12 +160,11 @@ namespace GameProject {
                 }
 
                 if (_dragHandle != DragHandle.None) {
-                    _isDragging = true;
                     _dragDiff = new Vector2(dx, dy);
                 }
             }
             // Drag ongoing
-            if (_isDragging && Triggers.SelectionDrag.HeldOnly()) {
+            if (_dragHandle != DragHandle.None && Triggers.SelectionDrag.HeldOnly()) {
                 // Move selection
                 if (_dragHandle.HasFlag(DragHandle.Center)) {
                     r.X = _mouseWorld.X + _dragDiff.X;
@@ -222,7 +221,6 @@ namespace GameProject {
             }
             // Drag end
             if (Triggers.SelectionDrag.Released()) {
-                _isDragging = false;
                 _dragHandle = DragHandle.None;
             }
 
