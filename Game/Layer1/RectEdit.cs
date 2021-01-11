@@ -4,25 +4,26 @@ using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
 
 namespace GameProject {
-    public class Selection {
-        public Selection() { }
+    public class RectEdit {
+        public RectEdit() { }
 
-        public RectangleF? Rect = null;
-
-        public void Draw(SpriteBatch s) {
-            if (Rect != null) {
-                s.FillRectangle(Utility.ExpandRect(Rect.Value, _handleDistanceWorld), Color.White * 0.1f);
-                s.DrawRectangle(Utility.ExpandRect(Rect.Value, _handleDistanceWorld), Color.White * 0.5f, Camera.ScreenToWorldScale);
-                s.FillRectangle(Rect.Value, Color.White * 0.2f);
-                s.DrawRectangle(Rect.Value, Color.White * 0.5f, Camera.ScreenToWorldScale);
+        public RectangleF? Rect {
+            get => _rect;
+            set {
+                _rect = value;
+                _proxyRect = value;
             }
         }
+        public bool IsResizable {
+            get;
+            set;
+        } = true;
 
-        public void UpdateInput(Vector2 mouseWorld, bool canCreate = true) {
+        public bool UpdateInput(Vector2 mouseWorld, bool canCreate = true) {
             // TODO: Might be nice to do a minimum selection size threshold for it's area. (width * height > 900)
 
             // Use the current selection or create a new one.
-            RectangleF r = Rect ?? new RectangleF(mouseWorld.X, mouseWorld.Y, 0, 0);
+            RectangleF r = _proxyRect ?? new RectangleF(mouseWorld.X, mouseWorld.Y, 0, 0);
             bool shouldCreate = false;
 
             float x1 = r.Left;
@@ -32,8 +33,9 @@ namespace GameProject {
 
             // Drag start
             if (Triggers.SelectionDrag.Pressed()) {
-                if (Rect == null) {
+                if (_proxyRect == null) {
                     shouldCreate = canCreate;
+                    _validProxy = false;
                 }
 
                 float dx = 0;
@@ -44,7 +46,7 @@ namespace GameProject {
                     dx = x1 - mouseWorld.X;
                     dy = y1 - mouseWorld.Y;
                     _dragHandle = DragHandle.Center;
-                } else {
+                } else if (IsResizable) {
                     // Resize selection
                     if (y1 - _handleDistanceWorld <= mouseWorld.Y && mouseWorld.Y <= y2 + _handleDistanceWorld) {
                         float diff1 = x1 - mouseWorld.X;
@@ -96,7 +98,7 @@ namespace GameProject {
                 if (_dragHandle.HasFlag(DragHandle.Center)) {
                     r.X = mouseWorld.X + _dragDiff.X;
                     r.Y = mouseWorld.Y + _dragDiff.Y;
-                } else {
+                } else if (IsResizable) {
                     // Resize selection
                     float width = r.Width;
                     float height = r.Height;
@@ -146,13 +148,38 @@ namespace GameProject {
                     }
                 }
             }
+
+            if (_dragHandle != DragHandle.None && (_proxyRect != null || shouldCreate)) {
+                _proxyRect = r;
+
+                if (r.Width * r.Height >= 900 * Camera.ScreenToWorldScale) {
+                    _validProxy = true;
+                }
+                if (_validProxy) {
+                    _rect = _proxyRect;
+                } else {
+                    _rect = null;
+                }
+            }
+
             // Drag end
             if (Triggers.SelectionDrag.Released()) {
                 _dragHandle = DragHandle.None;
+                _validProxy = false;
+                return true;
             }
 
-            if (Rect != null || shouldCreate) {
-                Rect = r;
+            return false;
+        }
+
+        public void Draw(SpriteBatch s) {
+            if (Rect != null) {
+                if (IsResizable) {
+                    s.FillRectangle(Utility.ExpandRect(Rect.Value, _handleDistanceWorld), Color.White * 0.1f);
+                    s.DrawRectangle(Utility.ExpandRect(Rect.Value, _handleDistanceWorld), Color.White * 0.5f, Camera.ScreenToWorldScale);
+                }
+                s.FillRectangle(Rect.Value, Color.White * 0.2f);
+                s.DrawRectangle(Rect.Value, Color.White * 0.5f, Camera.ScreenToWorldScale);
             }
         }
 
@@ -171,5 +198,9 @@ namespace GameProject {
             get => _handleDistance * Camera.ScreenToWorldScale;
         }
         Vector2 _dragDiff = new Vector2();
+
+        RectangleF? _rect;
+        RectangleF? _proxyRect;
+        bool _validProxy = false;
     }
 }

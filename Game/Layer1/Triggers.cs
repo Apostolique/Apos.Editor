@@ -14,6 +14,7 @@ namespace GameProject {
 
         public static ICondition CameraDrag = new MouseCondition(MouseButton.MiddleButton);
         public static ICondition SelectionDrag = new MouseCondition(MouseButton.LeftButton);
+        public static ICondition SelectEntity = new MouseCondition(MouseButton.LeftButton);
 
         public static ICondition CreateEntity = new KeyboardCondition(Keys.Enter);
     }
