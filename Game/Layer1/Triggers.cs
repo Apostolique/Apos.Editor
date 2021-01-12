@@ -1,4 +1,5 @@
 using Apos.Input;
+using Track = Apos.Input.Track;
 using Microsoft.Xna.Framework.Input;
 
 namespace GameProject {
@@ -13,8 +14,7 @@ namespace GameProject {
         public static ICondition RotateRight = new KeyboardCondition(Keys.OemPeriod);
 
         public static ICondition CameraDrag = new MouseCondition(MouseButton.MiddleButton);
-        public static ICondition SelectionDrag = new MouseCondition(MouseButton.LeftButton);
-        public static ICondition SelectEntity = new MouseCondition(MouseButton.LeftButton);
+        public static ICondition SelectionDrag = new Track.MouseCondition(MouseButton.LeftButton);
 
         public static ICondition CreateEntity = new KeyboardCondition(Keys.Enter);
     }

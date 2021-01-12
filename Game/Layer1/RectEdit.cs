@@ -32,10 +32,12 @@ namespace GameProject {
             float y2 = r.Bottom;
 
             // Drag start
-            if (Triggers.SelectionDrag.Pressed()) {
+            if (Triggers.SelectionDrag.Pressed(false)) {
                 if (_proxyRect == null) {
                     shouldCreate = canCreate;
                     _validProxy = false;
+
+                    if (!shouldCreate) return false;
                 }
 
                 float dx = 0;
@@ -90,6 +92,7 @@ namespace GameProject {
 
                 if (_dragHandle != DragHandle.None) {
                     _dragDiff = new Vector2(dx, dy);
+                    Triggers.SelectionDrag.Consume();
                 }
             }
             // Drag ongoing
@@ -163,7 +166,7 @@ namespace GameProject {
             }
 
             // Drag end
-            if (Triggers.SelectionDrag.Released()) {
+            if (_dragHandle != DragHandle.None && Triggers.SelectionDrag.Released()) {
                 _dragHandle = DragHandle.None;
                 _validProxy = false;
                 return true;

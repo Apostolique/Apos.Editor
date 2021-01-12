@@ -51,8 +51,8 @@ namespace GameProject {
                 Exit();
 
             Camera.UpdateInput();
-            var isSelectionDone = _selection.UpdateInput(Camera.MouseWorld);
             _edit.UpdateInput(Camera.MouseWorld, false);
+            var isSelectionDone = _selection.UpdateInput(Camera.MouseWorld);
 
             if (_selection.Rect != null) {
                 var r = _selection.Rect.Value;
