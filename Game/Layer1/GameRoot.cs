@@ -137,13 +137,13 @@ namespace GameProject {
         }
 
         protected override void Draw(GameTime gameTime) {
-            GraphicsDevice.Clear(Color.Black);
+            GraphicsDevice.Clear(new Color(22, 22, 22));
 
             _s.Begin(transformMatrix: Camera.View);
             foreach (var e in _quadtree.Query(Camera.WorldBounds, Camera.Angle, Camera.Origin))
                 e.Draw(_s);
             foreach (var e in _hoveredEntities)
-                e.DrawHighlight(_s, Color.Gray);
+                e.DrawHighlight(_s, Color.Black);
             foreach (var eo in _selectedEntities)
                 eo.Entity.DrawHighlight(_s, Color.White);
 
