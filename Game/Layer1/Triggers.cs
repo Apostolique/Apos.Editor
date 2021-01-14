@@ -17,5 +17,20 @@ namespace GameProject {
         public static ICondition SelectionDrag = new Track.MouseCondition(MouseButton.LeftButton);
 
         public static ICondition CreateEntity = new KeyboardCondition(Keys.Enter);
+        public static ICondition RemoveEntity =
+            new AnyCondition(
+                new KeyboardCondition(Keys.Back),
+                new KeyboardCondition(Keys.Delete)
+            );
+        public static ICondition AddToSelection =
+            new AnyCondition(
+                new KeyboardCondition(Keys.LeftShift),
+                new KeyboardCondition(Keys.RightShift)
+            );
+        public static ICondition RemoveFromSelection =
+            new AnyCondition(
+                new KeyboardCondition(Keys.LeftControl),
+                new KeyboardCondition(Keys.RightControl)
+            );
     }
 }

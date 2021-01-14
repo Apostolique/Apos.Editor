@@ -50,8 +50,13 @@ namespace GameProject {
             if (Triggers.Quit.Pressed())
                 Exit();
 
+            bool shiftModifier = Triggers.AddToSelection.Held();
+            bool ctrlModifier = Triggers.RemoveFromSelection.Held();
+
             Camera.UpdateInput();
-            _edit.UpdateInput(Camera.MouseWorld, false);
+            if (!shiftModifier && !ctrlModifier) {
+                _edit.UpdateInput(Camera.MouseWorld, false);
+            }
             var isSelectionDone = _selection.UpdateInput(Camera.MouseWorld);
 
             if (_selection.Rect != null) {
@@ -62,7 +67,7 @@ namespace GameProject {
             }
 
             if (Triggers.CreateEntity.Pressed()) {
-                var newEntity = new Entity(new RectangleF(Camera.MouseWorld, new Vector2(100, 100)));
+                var newEntity = new Entity(GetNextId(), new RectangleF(Camera.MouseWorld, new Vector2(100, 100)));
                 _quadtree.Add(newEntity);
                 isSelectionDone = true;
                 _hoveredEntities.Clear();
@@ -71,63 +76,73 @@ namespace GameProject {
             }
 
             if (isSelectionDone) {
-                if (_hoveredEntities.Count >= 1) {
-                    // TODO: Handle SHIFT or CTRL modifiers.
-
+                if (!shiftModifier && !ctrlModifier) {
                     _selectedEntities.Clear();
-
-                    _selectedEntities.AddRange(_hoveredEntities.Select(e => {
+                }
+                if (ctrlModifier) {
+                    foreach (var e in _hoveredEntities) {
+                        _selectedEntities.RemoveWhere(se => e == se.Entity);
+                    }
+                } else {
+                    _selectedEntities.UnionWith(_hoveredEntities.Select(e => {
                         return new EntityOffset(e, new Vector2(0, 0));
                     }));
+                }
 
-                    var first = _selectedEntities[0];
-                    var pos1 = first.Entity.Bounds.XY;
+                if (_selectedEntities.Count >= 1) {
+                    using (IEnumerator<EntityOffset> e = _selectedEntities.GetEnumerator()) {
+                        e.MoveNext();
+                        var first = e.Current;
+                        var pos1 = first.Entity.Bounds.XY;
 
-                    float x1 = first.Entity.Bounds.X;
-                    float x2 = first.Entity.Bounds.X + first.Entity.Bounds.Width;
-                    float y1 = first.Entity.Bounds.Y;
-                    float y2 = first.Entity.Bounds.Y + first.Entity.Bounds.Height;
+                        float x1 = first.Entity.Bounds.X;
+                        float x2 = first.Entity.Bounds.X + first.Entity.Bounds.Width;
+                        float y1 = first.Entity.Bounds.Y;
+                        float y2 = first.Entity.Bounds.Y + first.Entity.Bounds.Height;
 
-                    for (int i = 1; i < _selectedEntities.Count; i++) {
-                        var current = _selectedEntities[i];
-                        x1 = MathF.Min(current.Entity.Bounds.X, x1);
-                        x2 = MathF.Max(current.Entity.Bounds.X + current.Entity.Bounds.Width, x2);
-                        y1 = MathF.Min(current.Entity.Bounds.Y, y1);
-                        y2 = MathF.Max(current.Entity.Bounds.Y + current.Entity.Bounds.Height, y2);
+                        while (e.MoveNext()) {
+                            var current = e.Current;
+                            x1 = MathF.Min(current.Entity.Bounds.X, x1);
+                            x2 = MathF.Max(current.Entity.Bounds.X + current.Entity.Bounds.Width, x2);
+                            y1 = MathF.Min(current.Entity.Bounds.Y, y1);
+                            y2 = MathF.Max(current.Entity.Bounds.Y + current.Entity.Bounds.Height, y2);
 
-                        var pos2 = current.Entity.Bounds.XY;
+                            var pos2 = current.Entity.Bounds.XY;
 
-                        current.Offset = pos2 - pos1;
+                            current.Offset = pos2 - pos1;
+                        }
+
+                        _edit.IsResizable = _selectedEntities.Count == 1;
+                        _edit.Rect = new RectangleF(x1, y1, x2 - x1, y2 - y1);
+                        first.Offset = pos1 - new Vector2(x1, y1);
                     }
-
-                    _edit.IsResizable = _selectedEntities.Count == 1;
-                    _edit.Rect = new RectangleF(x1, y1, x2 - x1, y2 - y1);
-                    first.Offset = pos1 - new Vector2(x1, y1);
                 } else {
-                    _selectedEntities.Clear();
                     _edit.Rect = null;
                 }
                 _selection.Rect = null;
             }
 
             if (_edit.Rect != null) {
-                var first = _selectedEntities[0];
-                var bound = first.Entity.Bounds;
-                bound.XY = first.Offset + _edit.Rect.Value.Position;
-                first.Entity.Bounds = bound;
-                _quadtree.Update(first.Entity);
-
-                for (int i = 1; i < _selectedEntities.Count; i++) {
-                    var current = _selectedEntities[i];
-                    bound = current.Entity.Bounds;
-                    bound.XY = current.Offset + first.Entity.Bounds.XY;
-                    current.Entity.Bounds = bound;
-                    _quadtree.Update(current.Entity);
-                }
-
-                if (_selectedEntities.Count == 1) {
-                    bound.Size = _edit.Rect.Value.Size;
+                using (IEnumerator<EntityOffset> e = _selectedEntities.GetEnumerator()) {
+                    e.MoveNext();
+                    var first = e.Current;
+                    var bound = first.Entity.Bounds;
+                    bound.XY = first.Offset + _edit.Rect.Value.Position;
                     first.Entity.Bounds = bound;
+
+                    while (e.MoveNext()) {
+                        var current = e.Current;
+                        bound = current.Entity.Bounds;
+                        bound.XY = current.Offset + first.Entity.Bounds.XY;
+                        current.Entity.Bounds = bound;
+                        _quadtree.Update(current.Entity);
+                    }
+
+                    if (_selectedEntities.Count == 1) {
+                        bound.Size = _edit.Rect.Value.Size;
+                        first.Entity.Bounds = bound;
+                    }
+                    _quadtree.Update(first.Entity);
                 }
             }
 
@@ -159,16 +174,21 @@ namespace GameProject {
             base.Draw(gameTime);
         }
 
+        private uint GetNextId() {
+            return _lastId++;
+        }
+
         GraphicsDeviceManager _graphics;
         SpriteBatch _s;
+
+        uint _lastId = 0;
 
         RectEdit _selection;
         RectEdit _edit;
         Quadtree<Entity> _quadtree;
 
         HashSet<Entity> _hoveredEntities = new HashSet<Entity>();
-        // List<Entity> _selectedEntities = new List<Entity>();
-        List<EntityOffset> _selectedEntities = new List<EntityOffset>();
+        HashSet<EntityOffset> _selectedEntities = new HashSet<EntityOffset>();
 
         class EntityOffset {
             public EntityOffset(Entity entity, Vector2 offset) {
@@ -183,6 +203,13 @@ namespace GameProject {
             public Vector2 Offset {
                 get;
                 set;
+            }
+
+            public override int GetHashCode() {
+                return Entity.GetHashCode();
+            }
+            public override bool Equals(object obj) {
+                return obj is EntityOffset && Entity.Equals(((EntityOffset)obj).Entity);
             }
         }
     }
