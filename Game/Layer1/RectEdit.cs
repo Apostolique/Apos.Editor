@@ -21,6 +21,9 @@ namespace GameProject {
             get;
             set;
         } = true;
+        public float HandleDistanceWorld {
+            get => _handleDistance * Camera.ScreenToWorldScale;
+        }
 
         public bool UpdateInput(Vector2 mouseWorld, bool canCreate = true) {
             // TODO: Might be nice to do a minimum selection size threshold for it's area. (width * height > 900)
@@ -52,27 +55,27 @@ namespace GameProject {
                     _dragHandle = DragHandle.Center;
                 } else if (IsResizable) {
                     // Resize selection
-                    if (y1 - _handleDistanceWorld <= mouseWorld.Y && mouseWorld.Y <= y2 + _handleDistanceWorld) {
+                    if (y1 - HandleDistanceWorld <= mouseWorld.Y && mouseWorld.Y <= y2 + HandleDistanceWorld) {
                         float diff1 = x1 - mouseWorld.X;
                         float diff2 = mouseWorld.X - x2;
 
-                        if (0 <= diff1 && diff1 <= _handleDistanceWorld) {
+                        if (0 <= diff1 && diff1 <= HandleDistanceWorld) {
                             _dragHandle |= DragHandle.Left;
                             dx = x1 - mouseWorld.X;
-                        } else if (0 <= diff2 && diff2 <= _handleDistanceWorld) {
+                        } else if (0 <= diff2 && diff2 <= HandleDistanceWorld) {
                             _dragHandle |= DragHandle.Right;
                             dx = x2 - mouseWorld.X;
                         }
                     }
                     // Resize selection
-                    if (x1 - _handleDistanceWorld <= mouseWorld.X && mouseWorld.X <= x2 + _handleDistanceWorld) {
+                    if (x1 - HandleDistanceWorld <= mouseWorld.X && mouseWorld.X <= x2 + HandleDistanceWorld) {
                         float diff1 = y1 - mouseWorld.Y;
                         float diff2 = mouseWorld.Y - y2;
 
-                        if (0 <= diff1 && diff1 <= _handleDistanceWorld) {
+                        if (0 <= diff1 && diff1 <= HandleDistanceWorld) {
                             _dragHandle |= DragHandle.Top;
                             dy = y1 - mouseWorld.Y;
-                        } else if (0 <= diff2 && diff2 <= _handleDistanceWorld) {
+                        } else if (0 <= diff2 && diff2 <= HandleDistanceWorld) {
                             _dragHandle |= DragHandle.Bottom;
                             dy = y2 - mouseWorld.Y;
                         }
@@ -179,8 +182,8 @@ namespace GameProject {
         public void Draw(SpriteBatch s) {
             if (Rect != null) {
                 if (IsResizable) {
-                    s.FillRectangle(Utility.ExpandRect(Rect.Value, _handleDistanceWorld), Color.White * 0.1f);
-                    s.DrawRectangle(Utility.ExpandRect(Rect.Value, _handleDistanceWorld), Color.White * 0.1f, Camera.ScreenToWorldScale);
+                    s.FillRectangle(Utility.ExpandRect(Rect.Value, HandleDistanceWorld), Color.White * 0.1f);
+                    s.DrawRectangle(Utility.ExpandRect(Rect.Value, HandleDistanceWorld), Color.White * 0.1f, Camera.ScreenToWorldScale);
                 }
                 s.FillRectangle(Rect.Value, Color.White * 0.2f);
                 s.DrawRectangle(Rect.Value, Color.White * 0.2f, Camera.ScreenToWorldScale);
@@ -198,9 +201,6 @@ namespace GameProject {
         }
         DragHandle _dragHandle = DragHandle.None;
         float _handleDistance = 50f;
-        float _handleDistanceWorld {
-            get => _handleDistance * Camera.ScreenToWorldScale;
-        }
         Vector2 _dragDiff = new Vector2();
 
         RectangleF? _rect;

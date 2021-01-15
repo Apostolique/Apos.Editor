@@ -59,14 +59,24 @@ namespace GameProject {
             }
             var isSelectionDone = _selection.UpdateInput(Camera.MouseWorld);
 
+            if (_cycleIndex != 0 && Vector2.DistanceSquared(_cycleMouse, Camera.MouseWorld) > MathF.Pow(10 * Camera.ScreenToWorldScale, 2)) {
+                _cycleIndex = 0;
+                _cycleMouse = Camera.MouseWorld;
+            }
+            bool allowSingleHover = _edit.Rect == null || !Utility.ExpandRect(_edit.Rect.Value, _edit.HandleDistanceWorld).Contains(Camera.MouseWorld);
+            if (allowSingleHover && Triggers.SelectionCycle.Pressed()) {
+                _cycleIndex++;
+                _cycleMouse = Camera.MouseWorld;
+            }
+
+            _hoveredEntities.Clear();
             if (_selection.Rect != null) {
                 var r = _selection.Rect.Value;
-                _hoveredEntities = _quadtree.Query(new RotRect(r.X, r.Y, r.Width, r.Height)).ToHashSet();
-            } else {
+                _hoveredEntities.UnionWith(_quadtree.Query(new RotRect(r.X, r.Y, r.Width, r.Height)));
+            } else if (allowSingleHover) {
                 var result = _quadtree.Query(Camera.MouseWorld.ToPoint()).OrderBy(e => e).ToList();
-                _hoveredEntities.Clear();
                 if (result.Count > 0) {
-                    _hoveredEntities.Add(result.Last());
+                    _hoveredEntities.Add(result[Utility.Mod(result.Count - 1 - _cycleIndex, result.Count)]);
                 }
             }
 
@@ -192,6 +202,8 @@ namespace GameProject {
 
         uint _lastId = 0;
         uint _sortOrder = 0;
+        int _cycleIndex = 0;
+        Vector2 _cycleMouse = Vector2.Zero;
 
         RectEdit _selection;
         RectEdit _edit;
