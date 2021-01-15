@@ -14,6 +14,7 @@ namespace GameProject {
                 _proxyRect = value;
 
                 _validProxy = _proxyRect != null;
+                _dragHandle = DragHandle.None;
             }
         }
         public bool IsResizable {
