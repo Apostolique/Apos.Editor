@@ -64,8 +64,9 @@ namespace GameProject {
                 _cycleMouse = Camera.MouseWorld;
             }
             bool allowSingleHover = _edit.Rect == null || !Utility.ExpandRect(_edit.Rect.Value, _edit.HandleDistanceWorld).Contains(Camera.MouseWorld);
-            if (allowSingleHover && Triggers.SelectionCycle.Pressed()) {
-                _cycleIndex++;
+            int scrollDelta = InputHelper.NewMouse.ScrollWheelValue - InputHelper.OldMouse.ScrollWheelValue;
+            if (allowSingleHover && scrollDelta != 0 && Triggers.SelectionCycle.Held()) {
+                _cycleIndex += MathF.Sign(scrollDelta);
                 _cycleMouse = Camera.MouseWorld;
             }
 
