@@ -12,6 +12,8 @@ namespace GameProject {
             set {
                 _rect = value;
                 _proxyRect = value;
+
+                _validProxy = _proxyRect != null;
             }
         }
         public bool IsResizable {
@@ -33,9 +35,8 @@ namespace GameProject {
 
             // Drag start
             if (Triggers.SelectionDrag.Pressed(false)) {
-                if (_proxyRect == null) {
+                if (!_validProxy) {
                     shouldCreate = canCreate;
-                    _validProxy = false;
 
                     if (!shouldCreate) return false;
                 }
@@ -155,7 +156,7 @@ namespace GameProject {
             if (_dragHandle != DragHandle.None && (_proxyRect != null || shouldCreate)) {
                 _proxyRect = r;
 
-                if (r.Width * r.Height >= 900 * Camera.ScreenToWorldScale) {
+                if (r.Width * r.Height >= MathF.Pow(10 * Camera.ScreenToWorldScale, 2)) {
                     _validProxy = true;
                 }
                 if (_validProxy) {
@@ -168,7 +169,6 @@ namespace GameProject {
             // Drag end
             if (_dragHandle != DragHandle.None && Triggers.SelectionDrag.Released()) {
                 _dragHandle = DragHandle.None;
-                _validProxy = false;
                 return true;
             }
 
@@ -188,12 +188,12 @@ namespace GameProject {
 
         [Flags]
         enum DragHandle {
-            None = 1 << 0,
-            Left = 1 << 1,
-            Top = 1 << 2,
-            Right = 1 << 3,
-            Bottom = 1 << 4,
-            Center = 1 << 5,
+            None = 0,
+            Left = 1 << 0,
+            Top = 1 << 1,
+            Right = 1 << 2,
+            Bottom = 1 << 3,
+            Center = 1 << 4,
         }
         DragHandle _dragHandle = DragHandle.None;
         float _handleDistance = 50f;
