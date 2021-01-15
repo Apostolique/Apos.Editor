@@ -1,13 +1,15 @@
+using System;
 using Dcrew.Spatial;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
 
 namespace GameProject {
-    public class Entity : IBounds {
-        public Entity(uint id, RectangleF r) {
+    public class Entity : IBounds, IComparable<Entity> {
+        public Entity(uint id, RectangleF r, uint sortOrder) {
             Id = id;
             Bounds = new RotRect(r.X, r.Y, r.Width, r.Height);
+            SortOrder = sortOrder;
         }
 
         public uint Id {
@@ -15,6 +17,10 @@ namespace GameProject {
             set;
         }
         public RotRect Bounds {
+            get;
+            set;
+        }
+        public uint SortOrder {
             get;
             set;
         }
@@ -26,6 +32,12 @@ namespace GameProject {
             s.DrawRectangle(new RectangleF(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height), c, 2f * Camera.ScreenToWorldScale);
         }
 
+        public int CompareTo(Entity value) {
+            if (SortOrder == value.SortOrder) {
+                return Id.CompareTo(value.Id);
+            }
+            return SortOrder.CompareTo(value.SortOrder);
+        }
         public override int GetHashCode() {
             return Id.GetHashCode();
         }

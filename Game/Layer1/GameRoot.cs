@@ -63,16 +63,22 @@ namespace GameProject {
                 var r = _selection.Rect.Value;
                 _hoveredEntities = _quadtree.Query(new RotRect(r.X, r.Y, r.Width, r.Height)).ToHashSet();
             } else {
-                _hoveredEntities = _quadtree.Query(Camera.MouseWorld.ToPoint()).ToHashSet();
+                var result = _quadtree.Query(Camera.MouseWorld.ToPoint()).OrderBy(e => e).ToList();
+                _hoveredEntities.Clear();
+                if (result.Count > 0) {
+                    _hoveredEntities.Add(result.Last());
+                }
             }
 
             if (Triggers.CreateEntity.Pressed()) {
-                var newEntity = new Entity(GetNextId(), new RectangleF(Camera.MouseWorld, new Vector2(100, 100)));
+                var newEntity = new Entity(GetNextId(), new RectangleF(Camera.MouseWorld, new Vector2(100, 100)), GetNextSortOrder());
                 _quadtree.Add(newEntity);
+                _entities.Add(newEntity.Id, newEntity);
+
                 isSelectionDone = true;
                 _hoveredEntities.Clear();
                 _hoveredEntities.Add(newEntity);
-                _edit.Rect = new RectangleF(newEntity.Bounds.XY, newEntity.Bounds.Size);
+                _selection.Rect = null;
             }
 
             if (isSelectionDone) {
@@ -155,7 +161,7 @@ namespace GameProject {
             GraphicsDevice.Clear(new Color(22, 22, 22));
 
             _s.Begin(transformMatrix: Camera.View);
-            foreach (var e in _quadtree.Query(Camera.WorldBounds, Camera.Angle, Camera.Origin))
+            foreach (var e in _quadtree.Query(Camera.WorldBounds, Camera.Angle, Camera.Origin).OrderBy(e => e))
                 e.Draw(_s);
             foreach (var e in _hoveredEntities)
                 e.DrawHighlight(_s, Color.Black);
@@ -177,15 +183,20 @@ namespace GameProject {
         private uint GetNextId() {
             return _lastId++;
         }
+        private uint GetNextSortOrder() {
+            return _sortOrder++;
+        }
 
         GraphicsDeviceManager _graphics;
         SpriteBatch _s;
 
         uint _lastId = 0;
+        uint _sortOrder = 0;
 
         RectEdit _selection;
         RectEdit _edit;
         Quadtree<Entity> _quadtree;
+        Dictionary<uint, Entity> _entities = new Dictionary<uint, Entity>();
 
         HashSet<Entity> _hoveredEntities = new HashSet<Entity>();
         HashSet<EntityOffset> _selectedEntities = new HashSet<EntityOffset>();
