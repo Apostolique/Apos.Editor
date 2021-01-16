@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Apos.Input;
@@ -46,6 +46,7 @@ namespace GameProject {
 
         protected override void Update(GameTime gameTime) {
             InputHelper.UpdateSetup();
+            _fps.Update(gameTime.ElapsedGameTime.TotalMilliseconds);
 
             if (Triggers.Quit.Pressed())
                 Exit();
@@ -191,6 +192,8 @@ namespace GameProject {
         }
 
         protected override void Draw(GameTime gameTime) {
+            _fps.Draw();
+
             GraphicsDevice.Clear(new Color(22, 22, 22));
 
             _s.Begin(transformMatrix: Camera.View);
@@ -209,6 +212,7 @@ namespace GameProject {
             var font = Assets.FontSystem.GetFont(30);
             _s.Begin();
             // Draw UI
+            _s.DrawString(font, $"fps: {_fps.FramesPerSecond} - Dropped Frames: {_fps.DroppedFrames} - Draw ms: {_fps.TimePerFrame} - Update ms: {_fps.TimePerUpdate}", new Vector2(10, 10), Color.White);
             _s.End();
 
             base.Draw(gameTime);
@@ -235,7 +239,7 @@ namespace GameProject {
         Dictionary<uint, Entity> _entities = new Dictionary<uint, Entity>();
 
         HashSet<Entity> _hoveredEntities = new HashSet<Entity>();
-        HashSet<EntityOffset> _selectedEntities = new HashSet<EntityOffset>();
+        FPSCounter _fps = new FPSCounter();
 
         class EntityOffset {
             public EntityOffset(Entity entity, Vector2 offset) {
