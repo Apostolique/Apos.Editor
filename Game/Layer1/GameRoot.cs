@@ -61,10 +61,23 @@ namespace GameProject {
 
             _hoveredEntities.Clear();
             if (_selection.Rect != null) {
+                // Group element hover
                 var r = _selection.Rect.Value;
                 _hoveredEntities.UnionWith(_quadtree.Query(new RotRect(r.X, r.Y, r.Width, r.Height)));
             } else {
-                var hoverUnderMouse = _quadtree.Query(Camera.MouseWorld.ToPoint()).OrderBy(e => e);
+                // Do a single element hover
+                bool addSelected = false;
+                if (_selectedEntities.Count == 1) {
+                    var bounds = _selectedEntities.First().Entity.Bounds;
+                    addSelected = !bounds.Contains(Camera.MouseWorld) && Utility.ExpandRect(new RectangleF(bounds.X, bounds.Y, bounds.Width, bounds.Height), _edit.HandleDistanceWorld).Contains(Camera.MouseWorld);
+                }
+
+                IOrderedEnumerable<Entity> hoverUnderMouse;
+                if (addSelected) {
+                    hoverUnderMouse = _quadtree.Query(Camera.MouseWorld.ToPoint()).Append(_selectedEntities.First().Entity).OrderBy(e => e);
+                } else {
+                    hoverUnderMouse = _quadtree.Query(Camera.MouseWorld.ToPoint()).OrderBy(e => e);
+                }
                 var hoverCount = hoverUnderMouse.Count();
                 var selectedAndHovered = _selectedEntities.Where(eo => hoverUnderMouse.Contains(eo.Entity)).Select(eo => eo.Entity).OrderBy(e => e);
                 int cycleReset = 0;
@@ -196,7 +209,6 @@ namespace GameProject {
             var font = Assets.FontSystem.GetFont(30);
             _s.Begin();
             // Draw UI
-            _s.DrawString(font, $"{_cycleMouse} - {Camera.MouseWorld}", new Vector2(10, 10), Color.White);
             _s.End();
 
             base.Draw(gameTime);
