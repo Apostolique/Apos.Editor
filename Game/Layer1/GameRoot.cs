@@ -121,12 +121,13 @@ namespace GameProject {
                 Random r = new Random();
                 for (int i = 0; i < 1000; i++) {
                     var screenBounds = Camera.WorldBounds;
+                    var origin = Camera.Origin;
                     float minX = screenBounds.Left;
                     float maxX = screenBounds.Right;
                     float minY = screenBounds.Top;
                     float maxY = screenBounds.Bottom;
 
-                    var newEntity = new Entity(GetNextId(), new RectangleF(new Vector2(r.NextSingle(minX, maxX), r.NextSingle(minY, maxY)), new Vector2(r.NextSingle(50, 200), r.NextSingle(50, 200))), GetNextSortOrder());
+                    var newEntity = new Entity(GetNextId(), new RectangleF(new Vector2(r.NextSingle(minX, maxX), r.NextSingle(minY, maxY)) - origin, new Vector2(r.NextSingle(50, 200), r.NextSingle(50, 200))), GetNextSortOrder());
                     _quadtree.Add(newEntity);
                     _entities.Add(newEntity.Id, newEntity);
 
