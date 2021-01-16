@@ -30,10 +30,10 @@ namespace GameProject {
             return new RectangleF(r.X - distance, r.Y - distance, r.Width + distance * 2, r.Height + distance * 2);
         }
         public static float ScreenArea(float square) {
-            return ScreenArea(square, square);
+            return MathF.Pow(square * Camera.ScreenToWorldScale, 2);
         }
         public static float ScreenArea(float width, float height) {
-            return MathF.Pow(width * height * Camera.ScreenToWorldScale, 2);
+            return width * height * MathF.Pow(Camera.ScreenToWorldScale, 2);
         }
 
         public static int Mod(int x, int m) {
