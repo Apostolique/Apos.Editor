@@ -39,5 +39,6 @@ namespace GameProject {
             );
 
         public static ICondition SpawnStuff = new KeyboardCondition(Keys.F1);
+        public static ICondition ResetDroppedFrames = new KeyboardCondition(Keys.F2);
     }
 }

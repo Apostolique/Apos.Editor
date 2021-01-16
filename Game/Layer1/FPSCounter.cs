@@ -20,12 +20,13 @@ namespace GameProject {
         } = 0;
         public int DroppedFrames {
             get;
-            private set;
+            set;
         } = 0;
 
         public void Update(double elapsedTime) {
             _updateCounter++;
 
+            _totalTime += elapsedTime;
             timer += elapsedTime;
             if (timer <= _oneSecond) {
                 return;
@@ -43,7 +44,7 @@ namespace GameProject {
                 TimePerFrame = Math.Truncate(1000d / FramesPerSecond * 10000) / 10000;
             }
 
-            if (FramesPerSecond < 60) {
+            if (FramesPerSecond < 60 && _totalTime > 3000) {
                 DroppedFrames += 60 - FramesPerSecond;
             }
         }
@@ -55,5 +56,6 @@ namespace GameProject {
         private double timer = 0;
         private int _framesCounter = 0;
         private double _updateCounter = 0;
+        private double _totalTime = 0;
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Apos.Input;
@@ -51,6 +51,9 @@ namespace GameProject {
 
             if (Triggers.Quit.Pressed())
                 Exit();
+
+            if (Triggers.ResetDroppedFrames.Pressed())
+                _fps.DroppedFrames = 0;
 
             bool shiftModifier = Triggers.AddToSelection.Held();
             bool ctrlModifier = Triggers.RemoveFromSelection.Held();
