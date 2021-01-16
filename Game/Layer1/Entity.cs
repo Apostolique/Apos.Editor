@@ -24,6 +24,10 @@ namespace GameProject {
             get;
             set;
         }
+        public Vector2 Offset {
+            get;
+            set;
+        }
 
         public void Draw(SpriteBatch s) {
             s.FillRectangle(new RectangleF(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height), Color.Red * 0.7f);

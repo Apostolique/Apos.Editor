@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Apos.Input;
@@ -34,6 +34,7 @@ namespace GameProject {
             _graphics.ApplyChanges();
 
             _quadtree = new Quadtree<Entity>();
+            _selectedEntities = new Quadtree<Entity>();
             Camera.Setup();
             _selection = new RectEdit();
             _edit = new RectEdit();
@@ -68,19 +69,19 @@ namespace GameProject {
             } else {
                 // Do a single element hover
                 bool addSelected = false;
-                if (_selectedEntities.Count == 1) {
-                    var bounds = _selectedEntities.First().Entity.Bounds;
+                if (_selectedEntities.Count() == 1) {
+                    var bounds = _selectedEntities.First().Bounds;
                     addSelected = !bounds.Contains(Camera.MouseWorld) && Utility.ExpandRect(new RectangleF(bounds.X, bounds.Y, bounds.Width, bounds.Height), _edit.HandleDistanceWorld).Contains(Camera.MouseWorld);
                 }
 
                 IOrderedEnumerable<Entity> hoverUnderMouse;
                 if (addSelected) {
-                    hoverUnderMouse = _quadtree.Query(Camera.MouseWorld.ToPoint()).Append(_selectedEntities.First().Entity).OrderBy(e => e);
+                    hoverUnderMouse = _quadtree.Query(Camera.MouseWorld).Append(_selectedEntities.First()).OrderBy(e => e);
                 } else {
-                    hoverUnderMouse = _quadtree.Query(Camera.MouseWorld.ToPoint()).OrderBy(e => e);
+                    hoverUnderMouse = _quadtree.Query(Camera.MouseWorld).OrderBy(e => e);
                 }
                 var hoverCount = hoverUnderMouse.Count();
-                var selectedAndHovered = _selectedEntities.Where(eo => hoverUnderMouse.Contains(eo.Entity)).Select(eo => eo.Entity).OrderBy(e => e);
+                var selectedAndHovered = _selectedEntities.Query(Camera.MouseWorld).OrderBy(e => e);
                 int cycleReset = 0;
                 if (selectedAndHovered.Count() > 0) {
                     cycleReset = hoverCount - 1 - hoverUnderMouse.ToList().IndexOf(selectedAndHovered.Last());
@@ -117,42 +118,46 @@ namespace GameProject {
 
             if (isSelectionDone) {
                 if (!shiftModifier && !ctrlModifier) {
-                    _selectedEntities.Clear();
+                    var all = _selectedEntities.ToArray();
+                    foreach (var e in all) {
+                        _selectedEntities.Remove(e);
+                    }
                 }
                 if (ctrlModifier) {
                     foreach (var e in _hoveredEntities) {
-                        _selectedEntities.RemoveWhere(se => e == se.Entity);
+                        _selectedEntities.Remove(e);
                     }
                 } else {
-                    _selectedEntities.UnionWith(_hoveredEntities.Select(e => {
-                        return new EntityOffset(e, new Vector2(0, 0));
-                    }));
+                    foreach (var e in _hoveredEntities) {
+                        if (!_selectedEntities.Contains(e)) {
+                            _selectedEntities.Add(e);
+                        }
+                    }
                 }
 
-                if (_selectedEntities.Count >= 1) {
-                    using (IEnumerator<EntityOffset> e = _selectedEntities.GetEnumerator()) {
+                if (_selectedEntities.Count() >= 1) {
+                    using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
                         e.MoveNext();
                         var first = e.Current;
-                        var pos1 = first.Entity.Bounds.XY;
+                        var pos1 = first.Bounds.XY;
 
-                        float x1 = first.Entity.Bounds.X;
-                        float x2 = first.Entity.Bounds.X + first.Entity.Bounds.Width;
-                        float y1 = first.Entity.Bounds.Y;
-                        float y2 = first.Entity.Bounds.Y + first.Entity.Bounds.Height;
+                        float x1 = first.Bounds.X;
+                        float x2 = first.Bounds.X + first.Bounds.Width;
+                        float y1 = first.Bounds.Y;
+                        float y2 = first.Bounds.Y + first.Bounds.Height;
 
                         while (e.MoveNext()) {
                             var current = e.Current;
-                            x1 = MathF.Min(current.Entity.Bounds.X, x1);
-                            x2 = MathF.Max(current.Entity.Bounds.X + current.Entity.Bounds.Width, x2);
-                            y1 = MathF.Min(current.Entity.Bounds.Y, y1);
-                            y2 = MathF.Max(current.Entity.Bounds.Y + current.Entity.Bounds.Height, y2);
+                            x1 = MathF.Min(current.Bounds.X, x1);
+                            x2 = MathF.Max(current.Bounds.X + current.Bounds.Width, x2);
+                            y1 = MathF.Min(current.Bounds.Y, y1);
+                            y2 = MathF.Max(current.Bounds.Y + current.Bounds.Height, y2);
 
-                            var pos2 = current.Entity.Bounds.XY;
-
+                            var pos2 = current.Bounds.XY;
                             current.Offset = pos2 - pos1;
                         }
 
-                        _edit.IsResizable = _selectedEntities.Count == 1;
+                        _edit.IsResizable = _selectedEntities.Count() == 1;
                         _edit.Rect = new RectangleF(x1, y1, x2 - x1, y2 - y1);
                         first.Offset = pos1 - new Vector2(x1, y1);
                     }
@@ -163,26 +168,28 @@ namespace GameProject {
             }
 
             if (_edit.Rect != null) {
-                using (IEnumerator<EntityOffset> e = _selectedEntities.GetEnumerator()) {
+                using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
                     e.MoveNext();
                     var first = e.Current;
-                    var bound = first.Entity.Bounds;
+                    var bound = first.Bounds;
                     bound.XY = first.Offset + _edit.Rect.Value.Position;
-                    first.Entity.Bounds = bound;
+                    first.Bounds = bound;
 
                     while (e.MoveNext()) {
                         var current = e.Current;
-                        bound = current.Entity.Bounds;
-                        bound.XY = current.Offset + first.Entity.Bounds.XY;
-                        current.Entity.Bounds = bound;
-                        _quadtree.Update(current.Entity);
+                        bound = current.Bounds;
+                        bound.XY = current.Offset + first.Bounds.XY;
+                        current.Bounds = bound;
+                        _quadtree.Update(current);
+                        _selectedEntities.Update(current);
                     }
 
-                    if (_selectedEntities.Count == 1) {
+                    if (_selectedEntities.Count() == 1) {
                         bound.Size = _edit.Rect.Value.Size;
-                        first.Entity.Bounds = bound;
+                        first.Bounds = bound;
                     }
-                    _quadtree.Update(first.Entity);
+                    _quadtree.Update(first);
+                    _selectedEntities.Update(first);
                 }
             }
 
@@ -205,8 +212,8 @@ namespace GameProject {
 
             foreach (var e in _hoveredEntities)
                 e.DrawHighlight(_s, -2f, 3f, Color.Black);
-            foreach (var eo in _selectedEntities)
-                eo.Entity.DrawHighlight(_s, 0f, 2f, Color.White);
+            foreach (var e in _selectedEntities)
+                e.DrawHighlight(_s, 0f, 2f, Color.White);
             _s.End();
 
             var font = Assets.FontSystem.GetFont(30);
@@ -239,29 +246,8 @@ namespace GameProject {
         Dictionary<uint, Entity> _entities = new Dictionary<uint, Entity>();
 
         HashSet<Entity> _hoveredEntities = new HashSet<Entity>();
+        Quadtree<Entity> _selectedEntities;
+
         FPSCounter _fps = new FPSCounter();
-
-        class EntityOffset {
-            public EntityOffset(Entity entity, Vector2 offset) {
-                Entity = entity;
-                Offset = offset;
-            }
-
-            public Entity Entity {
-                get;
-                set;
-            }
-            public Vector2 Offset {
-                get;
-                set;
-            }
-
-            public override int GetHashCode() {
-                return Entity.GetHashCode();
-            }
-            public override bool Equals(object obj) {
-                return obj is EntityOffset && Entity.Equals(((EntityOffset)obj).Entity);
-            }
-        }
     }
 }
