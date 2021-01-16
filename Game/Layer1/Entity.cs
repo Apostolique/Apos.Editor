@@ -33,10 +33,8 @@ namespace GameProject {
         }
 
         public int CompareTo(Entity value) {
-            if (SortOrder == value.SortOrder) {
-                return Id.CompareTo(value.Id);
-            }
-            return SortOrder.CompareTo(value.SortOrder);
+            int compareTo = SortOrder.CompareTo(value.SortOrder);
+            return compareTo == 0 ? Id.CompareTo(value.Id) : compareTo;
         }
         public override int GetHashCode() {
             return Id.GetHashCode();
