@@ -242,10 +242,10 @@ namespace GameProject {
             _selection.Draw(_s);
             _edit.Draw(_s);
 
-            foreach (var e in _hoveredEntities)
-                e.DrawHighlight(_s, -2f, 3f, Color.Black);
             foreach (var e in _selectedEntities.Query(Camera.WorldBounds, Camera.Angle, Camera.Origin))
                 e.DrawHighlight(_s, 0f, 2f, Color.White);
+            foreach (var e in _hoveredEntities)
+                e.DrawHighlight(_s, -2f, 3f, Color.Black);
             _s.End();
 
             var font = Assets.FontSystem.GetFont(30);
