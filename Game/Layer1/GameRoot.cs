@@ -105,6 +105,17 @@ namespace GameProject {
                 }
             }
 
+            if (Triggers.RemoveEntity.Pressed()) {
+                _edit.Rect = null;
+                _hoveredEntities.Clear();
+                var all = _selectedEntities.ToArray();
+                foreach (var e in all) {
+                    _quadtree.Remove(e);
+                    _entities.Remove(e.Id);
+                    _selectedEntities.Remove(e);
+                }
+            }
+
             if (Triggers.CreateEntity.Pressed()) {
                 var newEntity = new Entity(GetNextId(), new RectangleF(Camera.MouseWorld, new Vector2(100, 100)), GetNextSortOrder());
                 _quadtree.Add(newEntity);
