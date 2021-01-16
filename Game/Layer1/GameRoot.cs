@@ -65,10 +65,11 @@ namespace GameProject {
                 _hoveredEntities.UnionWith(_quadtree.Query(new RotRect(r.X, r.Y, r.Width, r.Height)));
             } else {
                 var hoverUnderMouse = _quadtree.Query(Camera.MouseWorld.ToPoint()).OrderBy(e => e);
+                var hoverCount = hoverUnderMouse.Count();
                 var selectedAndHovered = _selectedEntities.Where(eo => hoverUnderMouse.Contains(eo.Entity)).Select(eo => eo.Entity).OrderBy(e => e);
                 int cycleReset = 0;
                 if (selectedAndHovered.Count() > 0) {
-                    cycleReset = hoverUnderMouse.Count() - 1 - hoverUnderMouse.ToList().IndexOf(selectedAndHovered.Last());
+                    cycleReset = hoverCount - 1 - hoverUnderMouse.ToList().IndexOf(selectedAndHovered.Last());
                     if (_cycleMouse == null) {
                         _cycleIndex = cycleReset;
                     }
@@ -84,9 +85,8 @@ namespace GameProject {
                     _cycleMouse = Camera.MouseWorld;
                 }
 
-                var result = _quadtree.Query(Camera.MouseWorld.ToPoint()).OrderBy(e => e).ToList();
-                if (result.Count > 0) {
-                    _hoveredEntities.Add(result[Utility.Mod(result.Count - 1 - _cycleIndex, result.Count)]);
+                if (hoverCount > 0) {
+                    _hoveredEntities.Add(hoverUnderMouse.ElementAt(Utility.Mod(hoverCount - 1 - _cycleIndex, hoverCount)));
                 }
             }
 
