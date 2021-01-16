@@ -116,6 +116,26 @@ namespace GameProject {
                 _selection.Rect = null;
             }
 
+            if (Triggers.SpawnStuff.Pressed()) {
+                _hoveredEntities.Clear();
+                Random r = new Random();
+                for (int i = 0; i < 1000; i++) {
+                    var screenBounds = Camera.WorldBounds;
+                    float minX = screenBounds.Left;
+                    float maxX = screenBounds.Right;
+                    float minY = screenBounds.Top;
+                    float maxY = screenBounds.Bottom;
+
+                    var newEntity = new Entity(GetNextId(), new RectangleF(new Vector2(r.NextSingle(minX, maxX), r.NextSingle(minY, maxY)), new Vector2(r.NextSingle(50, 200), r.NextSingle(50, 200))), GetNextSortOrder());
+                    _quadtree.Add(newEntity);
+                    _entities.Add(newEntity.Id, newEntity);
+
+                    isSelectionDone = true;
+                    _hoveredEntities.Add(newEntity);
+                    _selection.Rect = null;
+                }
+            }
+
             if (isSelectionDone) {
                 if (!shiftModifier && !ctrlModifier) {
                     var all = _selectedEntities.ToArray();

@@ -37,5 +37,7 @@ namespace GameProject {
                 AddToSelection,
                 RemoveFromSelection
             );
+
+        public static ICondition SpawnStuff = new KeyboardCondition(Keys.F1);
     }
 }
