@@ -59,7 +59,7 @@ namespace GameProject {
             }
             var isSelectionDone = _selection.UpdateInput(Camera.MouseWorld);
 
-            if (_cycleIndex != 0 && Vector2.DistanceSquared(_cycleMouse, Camera.MouseWorld) > MathF.Pow(10 * Camera.ScreenToWorldScale, 2)) {
+            if (_cycleIndex != 0 && Vector2.DistanceSquared(_cycleMouse, Camera.MouseWorld) > Utility.ScreenArea(10)) {
                 _cycleIndex = 0;
                 _cycleMouse = Camera.MouseWorld;
             }

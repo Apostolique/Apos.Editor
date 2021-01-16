@@ -29,6 +29,12 @@ namespace GameProject {
         public static RectangleF ExpandRect(RectangleF r, float distance) {
             return new RectangleF(r.X - distance, r.Y - distance, r.Width + distance * 2, r.Height + distance * 2);
         }
+        public static float ScreenArea(float square) {
+            return ScreenArea(square, square);
+        }
+        public static float ScreenArea(float width, float height) {
+            return MathF.Pow(width * height * Camera.ScreenToWorldScale, 2);
+        }
 
         public static int Mod(int x, int m) {
             return (x % m + m) % m;

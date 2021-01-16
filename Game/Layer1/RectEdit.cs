@@ -26,8 +26,6 @@ namespace GameProject {
         }
 
         public bool UpdateInput(Vector2 mouseWorld, bool canCreate = true) {
-            // TODO: Might be nice to do a minimum selection size threshold for it's area. (width * height > 900)
-
             // Use the current selection or create a new one.
             RectangleF r = _proxyRect ?? new RectangleF(mouseWorld.X, mouseWorld.Y, 0, 0);
             bool shouldCreate = false;
@@ -160,7 +158,7 @@ namespace GameProject {
             if (_dragHandle != DragHandle.None && (_proxyRect != null || shouldCreate)) {
                 _proxyRect = r;
 
-                if (r.Width * r.Height >= MathF.Pow(10 * Camera.ScreenToWorldScale, 2)) {
+                if (r.Width * r.Height >= Utility.ScreenArea(10)) {
                     _validProxy = true;
                 }
                 if (_validProxy) {
