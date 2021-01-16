@@ -28,8 +28,8 @@ namespace GameProject {
         public void Draw(SpriteBatch s) {
             s.FillRectangle(new RectangleF(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height), Color.Red * 0.7f);
         }
-        public void DrawHighlight(SpriteBatch s, Color c) {
-            s.DrawRectangle(new RectangleF(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height), c, 2f * Camera.ScreenToWorldScale);
+        public void DrawHighlight(SpriteBatch s, float distance, float thickness, Color c) {
+            s.DrawRectangle(Utility.ExpandRect(new RectangleF(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height), distance * Camera.ScreenToWorldScale), c, thickness * Camera.ScreenToWorldScale);
         }
 
         public int CompareTo(Entity value) {

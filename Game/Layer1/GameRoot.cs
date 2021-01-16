@@ -59,22 +59,31 @@ namespace GameProject {
             }
             var isSelectionDone = _selection.UpdateInput(Camera.MouseWorld);
 
-            if (_cycleIndex != 0 && Vector2.DistanceSquared(_cycleMouse, Camera.MouseWorld) > Utility.ScreenArea(10)) {
-                _cycleIndex = 0;
-                _cycleMouse = Camera.MouseWorld;
-            }
-            bool allowSingleHover = _edit.Rect == null || !Utility.ExpandRect(_edit.Rect.Value, _edit.HandleDistanceWorld).Contains(Camera.MouseWorld);
-            int scrollDelta = InputHelper.NewMouse.ScrollWheelValue - InputHelper.OldMouse.ScrollWheelValue;
-            if (allowSingleHover && scrollDelta != 0 && Triggers.SelectionCycle.Held()) {
-                _cycleIndex += MathF.Sign(scrollDelta);
-                _cycleMouse = Camera.MouseWorld;
-            }
-
             _hoveredEntities.Clear();
             if (_selection.Rect != null) {
                 var r = _selection.Rect.Value;
                 _hoveredEntities.UnionWith(_quadtree.Query(new RotRect(r.X, r.Y, r.Width, r.Height)));
-            } else if (allowSingleHover) {
+            } else {
+                var hoverUnderMouse = _quadtree.Query(Camera.MouseWorld.ToPoint()).OrderBy(e => e);
+                var selectedAndHovered = _selectedEntities.Where(eo => hoverUnderMouse.Contains(eo.Entity)).Select(eo => eo.Entity).OrderBy(e => e);
+                int cycleReset = 0;
+                if (selectedAndHovered.Count() > 0) {
+                    cycleReset = hoverUnderMouse.Count() - 1 - hoverUnderMouse.ToList().IndexOf(selectedAndHovered.Last());
+                    if (_cycleMouse == null) {
+                        _cycleIndex = cycleReset;
+                    }
+                }
+
+                if (_cycleMouse != null && Vector2.DistanceSquared(_cycleMouse.Value, Camera.MouseWorld) > Utility.ScreenArea(10)) {
+                    _cycleIndex = cycleReset;
+                    _cycleMouse = null;
+                }
+                int scrollDelta = InputHelper.NewMouse.ScrollWheelValue - InputHelper.OldMouse.ScrollWheelValue;
+                if (scrollDelta != 0 && Triggers.SelectionCycle.Held()) {
+                    _cycleIndex += MathF.Sign(scrollDelta);
+                    _cycleMouse = Camera.MouseWorld;
+                }
+
                 var result = _quadtree.Query(Camera.MouseWorld.ToPoint()).OrderBy(e => e).ToList();
                 if (result.Count > 0) {
                     _hoveredEntities.Add(result[Utility.Mod(result.Count - 1 - _cycleIndex, result.Count)]);
@@ -174,18 +183,20 @@ namespace GameProject {
             _s.Begin(transformMatrix: Camera.View);
             foreach (var e in _quadtree.Query(Camera.WorldBounds, Camera.Angle, Camera.Origin).OrderBy(e => e))
                 e.Draw(_s);
-            foreach (var e in _hoveredEntities)
-                e.DrawHighlight(_s, Color.Black);
-            foreach (var eo in _selectedEntities)
-                eo.Entity.DrawHighlight(_s, Color.White);
 
             _selection.Draw(_s);
             _edit.Draw(_s);
+
+            foreach (var e in _hoveredEntities)
+                e.DrawHighlight(_s, -2f, 3f, Color.Black);
+            foreach (var eo in _selectedEntities)
+                eo.Entity.DrawHighlight(_s, 0f, 2f, Color.White);
             _s.End();
 
             var font = Assets.FontSystem.GetFont(30);
             _s.Begin();
             // Draw UI
+            _s.DrawString(font, $"{_cycleMouse} - {Camera.MouseWorld}", new Vector2(10, 10), Color.White);
             _s.End();
 
             base.Draw(gameTime);
@@ -204,7 +215,7 @@ namespace GameProject {
         uint _lastId = 0;
         uint _sortOrder = 0;
         int _cycleIndex = 0;
-        Vector2 _cycleMouse = Vector2.Zero;
+        Vector2? _cycleMouse = Vector2.Zero;
 
         RectEdit _selection;
         RectEdit _edit;
