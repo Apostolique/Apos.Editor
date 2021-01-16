@@ -233,7 +233,7 @@ namespace GameProject {
 
             foreach (var e in _hoveredEntities)
                 e.DrawHighlight(_s, -2f, 3f, Color.Black);
-            foreach (var e in _selectedEntities)
+            foreach (var e in _selectedEntities.Query(Camera.WorldBounds, Camera.Angle, Camera.Origin))
                 e.DrawHighlight(_s, 0f, 2f, Color.White);
             _s.End();
 
