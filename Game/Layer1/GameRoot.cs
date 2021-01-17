@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Apos.Input;
@@ -34,6 +34,7 @@ namespace GameProject {
             _graphics.ApplyChanges();
 
             _quadtree = new Quadtree<Entity>();
+            _hoveredEntities = new Quadtree<Entity>();
             _selectedEntities = new Quadtree<Entity>();
             Camera.Setup();
             _selection = new RectEdit();
@@ -46,6 +47,7 @@ namespace GameProject {
         }
 
         protected override void Update(GameTime gameTime) {
+            // TODO: Start creating an API over the entity quadtree dictionary, etc. For addition, removal, updates.
             InputHelper.UpdateSetup();
             _fps.Update(gameTime.ElapsedGameTime.TotalMilliseconds);
 
@@ -64,11 +66,13 @@ namespace GameProject {
             }
             var isSelectionDone = _selection.UpdateInput(Camera.MouseWorld);
 
-            _hoveredEntities.Clear();
+            Utility.ClearQuadtree(_hoveredEntities);
             if (_selection.Rect != null) {
                 // Group element hover
                 var r = _selection.Rect.Value;
-                _hoveredEntities.UnionWith(_quadtree.Query(new RotRect(r.X, r.Y, r.Width, r.Height)));
+                foreach (var e in _quadtree.Query(new RotRect(r.X, r.Y, r.Width, r.Height))) {
+                    _hoveredEntities.Add(e);
+                }
             } else {
                 // Do a single element hover
                 bool addSelected = false;
@@ -110,7 +114,7 @@ namespace GameProject {
 
             if (Triggers.RemoveEntity.Pressed()) {
                 _edit.Rect = null;
-                _hoveredEntities.Clear();
+                Utility.ClearQuadtree(_hoveredEntities);
                 var all = _selectedEntities.ToArray();
                 foreach (var e in all) {
                     _quadtree.Remove(e);
@@ -125,13 +129,13 @@ namespace GameProject {
                 _entities.Add(newEntity.Id, newEntity);
 
                 isSelectionDone = true;
-                _hoveredEntities.Clear();
+                Utility.ClearQuadtree(_hoveredEntities);
                 _hoveredEntities.Add(newEntity);
                 _selection.Rect = null;
             }
 
             if (Triggers.SpawnStuff.Pressed()) {
-                _hoveredEntities.Clear();
+                Utility.ClearQuadtree(_hoveredEntities);
                 Random r = new Random();
                 for (int i = 0; i < 1000; i++) {
                     var screenBounds = Camera.WorldBounds;
@@ -153,10 +157,7 @@ namespace GameProject {
 
             if (isSelectionDone) {
                 if (!shiftModifier && !ctrlModifier) {
-                    var all = _selectedEntities.ToArray();
-                    foreach (var e in all) {
-                        _selectedEntities.Remove(e);
-                    }
+                    Utility.ClearQuadtree(_selectedEntities);
                 }
                 if (ctrlModifier) {
                     foreach (var e in _hoveredEntities) {
@@ -247,7 +248,7 @@ namespace GameProject {
 
             foreach (var e in _selectedEntities.Query(Camera.WorldBounds, Camera.Angle, Camera.Origin))
                 e.DrawHighlight(_s, 0f, 2f, Color.White);
-            foreach (var e in _hoveredEntities)
+            foreach (var e in _hoveredEntities.Query(Camera.WorldBounds, Camera.Angle, Camera.Origin))
                 e.DrawHighlight(_s, -2f, 3f, Color.Black);
             _s.End();
 
@@ -280,7 +281,7 @@ namespace GameProject {
         Quadtree<Entity> _quadtree;
         Dictionary<uint, Entity> _entities = new Dictionary<uint, Entity>();
 
-        HashSet<Entity> _hoveredEntities = new HashSet<Entity>();
+        Quadtree<Entity> _hoveredEntities;
         Quadtree<Entity> _selectedEntities;
 
         FPSCounter _fps = new FPSCounter();
