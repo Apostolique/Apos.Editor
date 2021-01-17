@@ -61,7 +61,7 @@ namespace GameProject {
             bool ctrlModifier = Triggers.RemoveFromSelection.Held();
 
             Camera.UpdateInput();
-            if (!shiftModifier && !ctrlModifier) {
+            if (!shiftModifier && !ctrlModifier && !Triggers.SkipEdit.Held()) {
                 _edit.UpdateInput(Camera.MouseWorld, false);
             }
             var isSelectionDone = _selection.UpdateInput(Camera.MouseWorld);

@@ -32,10 +32,16 @@ namespace GameProject {
                 new KeyboardCondition(Keys.LeftControl),
                 new KeyboardCondition(Keys.RightControl)
             );
+        public static ICondition SkipEdit =
+            new AnyCondition(
+                new KeyboardCondition(Keys.LeftAlt),
+                new KeyboardCondition(Keys.RightAlt)
+            );
         public static ICondition SelectionCycle =
             new AnyCondition(
                 AddToSelection,
-                RemoveFromSelection
+                RemoveFromSelection,
+                SkipEdit
             );
 
         public static ICondition SpawnStuff = new KeyboardCondition(Keys.F1);
