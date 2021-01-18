@@ -243,7 +243,7 @@ namespace GameProject {
                     _selectedEntities.Update(first);
                 }
             }
-            if (isEditDone) {
+            if (_edit.Rect != null && isEditDone) {
                 using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
                     _historyHandler.AutoCommit = false;
                     e.MoveNext();
