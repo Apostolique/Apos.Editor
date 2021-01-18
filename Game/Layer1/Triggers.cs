@@ -16,6 +16,27 @@ namespace GameProject {
         public static ICondition CameraDrag = new MouseCondition(MouseButton.MiddleButton);
         public static ICondition SelectionDrag = new Track.MouseCondition(MouseButton.LeftButton);
 
+        public static ICondition Undo =
+            new AllCondition(
+                new AnyCondition(
+                    new Track.KeyboardCondition(Keys.LeftControl),
+                    new Track.KeyboardCondition(Keys.RightControl)
+                ),
+                new Track.KeyboardCondition(Keys.Z)
+            );
+        public static ICondition Redo =
+            new AllCondition(
+                new AnyCondition(
+                    new Track.KeyboardCondition(Keys.LeftControl),
+                    new Track.KeyboardCondition(Keys.RightControl)
+                ),
+                new AnyCondition(
+                    new Track.KeyboardCondition(Keys.LeftShift),
+                    new Track.KeyboardCondition(Keys.RightShift)
+                ),
+                new Track.KeyboardCondition(Keys.Z)
+            );
+
         public static ICondition CreateEntity = new KeyboardCondition(Keys.Enter);
         public static ICondition RemoveEntity =
             new AnyCondition(

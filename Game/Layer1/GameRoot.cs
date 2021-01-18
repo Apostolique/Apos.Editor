@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Apos.Input;
+using Apos.History;
 using Dcrew.Spatial;
 using FontStashSharp;
 using Microsoft.Xna.Framework;
@@ -33,6 +34,8 @@ namespace GameProject {
             _graphics.SynchronizeWithVerticalRetrace = settings.IsVSync;
             _graphics.ApplyChanges();
 
+            _historyHandler = new HistoryHandler(null);
+
             _quadtree = new Quadtree<Entity>();
             _hoveredEntities = new Quadtree<Entity>();
             _selectedEntities = new Quadtree<Entity>();
@@ -56,13 +59,24 @@ namespace GameProject {
 
             if (Triggers.ResetDroppedFrames.Pressed())
                 _fps.DroppedFrames = 0;
-
             bool shiftModifier = Triggers.AddToSelection.Held();
             bool ctrlModifier = Triggers.RemoveFromSelection.Held();
 
+            if (Triggers.Redo.Pressed()) {
+                Utility.ClearQuadtree(_selectedEntities);
+                _historyHandler.Redo();
+                _edit.Rect = null;
+            }
+            if (Triggers.Undo.Pressed()) {
+                Utility.ClearQuadtree(_selectedEntities);
+                _historyHandler.Undo();
+                _edit.Rect = null;
+            }
+
             Camera.UpdateInput();
+            bool isEditDone = false;
             if (!shiftModifier && !ctrlModifier && !Triggers.SkipEdit.Held()) {
-                _edit.UpdateInput(Camera.MouseWorld, false);
+                isEditDone = _edit.UpdateInput(Camera.MouseWorld, false);
             }
             var isSelectionDone = _selection.UpdateInput(Camera.MouseWorld);
 
@@ -116,28 +130,28 @@ namespace GameProject {
                 _edit.Rect = null;
                 Utility.ClearQuadtree(_hoveredEntities);
                 var all = _selectedEntities.ToArray();
+                _historyHandler.AutoCommit = false;
                 foreach (var e in all) {
-                    _quadtree.Remove(e);
-                    _entities.Remove(e.Id);
+                    HistoryRemoveEntity(e.Id, new RectangleF(e.Bounds.XY, e.Bounds.Size), e.SortOrder);
                     _selectedEntities.Remove(e);
                 }
+                _historyHandler.Commit();
+                _historyHandler.AutoCommit = true;
             }
 
             if (Triggers.CreateEntity.Pressed()) {
-                var newEntity = new Entity(GetNextId(), new RectangleF(Camera.MouseWorld, new Vector2(100, 100)), GetNextSortOrder());
-                _quadtree.Add(newEntity);
-                _entities.Add(newEntity.Id, newEntity);
+                Utility.ClearQuadtree(_hoveredEntities);
+                HistoryCreateEntity(GetNextId(), new RectangleF(Camera.MouseWorld, new Vector2(100, 100)), GetNextSortOrder());
 
                 isSelectionDone = true;
-                Utility.ClearQuadtree(_hoveredEntities);
-                _hoveredEntities.Add(newEntity);
                 _selection.Rect = null;
             }
 
             if (Triggers.SpawnStuff.Pressed()) {
                 Utility.ClearQuadtree(_hoveredEntities);
                 Random r = new Random();
-                for (int i = 0; i < 1000; i++) {
+                _historyHandler.AutoCommit = false;
+                for (int i = 0; i < 10000; i++) {
                     var screenBounds = Camera.WorldBounds;
                     var origin = Camera.Origin;
                     float minX = screenBounds.Left;
@@ -145,14 +159,13 @@ namespace GameProject {
                     float minY = screenBounds.Top;
                     float maxY = screenBounds.Bottom;
 
-                    var newEntity = new Entity(GetNextId(), new RectangleF(new Vector2(r.NextSingle(minX, maxX), r.NextSingle(minY, maxY)) - origin, new Vector2(r.NextSingle(50, 200), r.NextSingle(50, 200))), GetNextSortOrder());
-                    _quadtree.Add(newEntity);
-                    _entities.Add(newEntity.Id, newEntity);
-
-                    isSelectionDone = true;
-                    _hoveredEntities.Add(newEntity);
-                    _selection.Rect = null;
+                    HistoryCreateEntity(GetNextId(), new RectangleF(new Vector2(r.NextSingle(minX, maxX), r.NextSingle(minY, maxY)) - origin, new Vector2(r.NextSingle(50, 200), r.NextSingle(50, 200))), GetNextSortOrder());
                 }
+                _historyHandler.Commit();
+                _historyHandler.AutoCommit = true;
+
+                isSelectionDone = true;
+                _selection.Rect = null;
             }
 
             if (isSelectionDone) {
@@ -194,8 +207,10 @@ namespace GameProject {
                         }
 
                         _edit.IsResizable = _selectedEntities.Count() == 1;
-                        _edit.Rect = new RectangleF(x1, y1, x2 - x1, y2 - y1);
-                        first.Offset = pos1 - new Vector2(x1, y1);
+                        _editRectStartXY = new Vector2(x1, y1);
+                        _editRectStartSize = new Vector2(x2 - x1, y2 - y1);
+                        _edit.Rect = new RectangleF(_editRectStartXY, _editRectStartSize);
+                        first.Offset = pos1 - _editRectStartXY;
                     }
                 } else {
                     _edit.Rect = null;
@@ -203,7 +218,7 @@ namespace GameProject {
                 _selection.Rect = null;
             }
 
-            if (_edit.Rect != null) {
+            if (_edit.Rect != null && !isEditDone) {
                 using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
                     e.MoveNext();
                     var first = e.Current;
@@ -228,9 +243,29 @@ namespace GameProject {
                     _selectedEntities.Update(first);
                 }
             }
+            if (isEditDone) {
+                using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
+                    _historyHandler.AutoCommit = false;
+                    e.MoveNext();
+                    var first = e.Current;
+                    Vector2 oldFirstStart = first.Offset + _editRectStartXY;
+                    Vector2 newFirstSTart = first.Offset + _edit.Rect.Value.Position;
+                    HistoryMoveEntity(first.Id, oldFirstStart, newFirstSTart);
+
+                    while (e.MoveNext()) {
+                        var current = e.Current;
+                        HistoryMoveEntity(current.Id, current.Offset + oldFirstStart, current.Offset + newFirstSTart);
+                    }
+
+                    if (_selectedEntities.Count() == 1) {
+                        HistoryResizeEntity(first.Id, _editRectStartSize, _edit.Rect.Value.Size);
+                    }
+                    _historyHandler.Commit();
+                    _historyHandler.AutoCommit = true;
+                }
+            }
 
             InputHelper.UpdateCleanup();
-            _quadtree.Update();
             base.Update(gameTime);
         }
 
@@ -267,6 +302,65 @@ namespace GameProject {
         private uint GetNextSortOrder() {
             return _sortOrder++;
         }
+        private void HistoryCreateEntity(uint id, RectangleF r, uint sortOrder) {
+            _historyHandler.Add(() => {
+                RemoveEntity(id);
+            }, () => {
+                CreateEntity(id, r, sortOrder);
+            });
+        }
+        private void HistoryRemoveEntity(uint id, RectangleF r, uint sortOrder) {
+            _historyHandler.Add(() => {
+                CreateEntity(id, r, sortOrder);
+            }, () => {
+                RemoveEntity(id);
+            });
+        }
+        private void HistoryMoveEntity(uint id, Vector2 oldXY, Vector2 newXY) {
+            _historyHandler.Add(() => {
+                MoveEntity(id, oldXY);
+            }, () => {
+                MoveEntity(id, newXY);
+            });
+        }
+        private void HistoryResizeEntity(uint id, Vector2 oldSize, Vector2 newSize) {
+            _historyHandler.Add(() => {
+                ResizeEntity(id, oldSize);
+            }, () => {
+                ResizeEntity(id, newSize);
+            });
+        }
+        private void CreateEntity(uint id, RectangleF r, uint sortOrder) {
+            Entity e = new Entity(id, r, sortOrder);
+            _quadtree.Add(e);
+            _entities.Add(e.Id, e);
+            _hoveredEntities.Add(e);
+        }
+        private void RemoveEntity(uint id) {
+            Entity e = _entities[id];
+            _quadtree.Remove(e);
+            _entities.Remove(e.Id);
+            _hoveredEntities.Remove(e);
+            _selectedEntities.Remove(e);
+        }
+        private void MoveEntity(uint id, Vector2 xy) {
+            Entity e = _entities[id];
+            var bound = e.Bounds;
+            bound.XY = xy;
+            e.Bounds = bound;
+            _quadtree.Update(e);
+            _hoveredEntities.Update(e);
+            _selectedEntities.Update(e);
+        }
+        private void ResizeEntity(uint id, Vector2 size) {
+            Entity e = _entities[id];
+            var bound = e.Bounds;
+            bound.Size = size;
+            e.Bounds = bound;
+            _quadtree.Update(e);
+            _hoveredEntities.Update(e);
+            _selectedEntities.Update(e);
+        }
 
         GraphicsDeviceManager _graphics;
         SpriteBatch _s;
@@ -278,9 +372,12 @@ namespace GameProject {
 
         RectEdit _selection;
         RectEdit _edit;
+        Vector2 _editRectStartXY = Vector2.Zero;
+        Vector2 _editRectStartSize = Vector2.Zero;
         Quadtree<Entity> _quadtree;
         Dictionary<uint, Entity> _entities = new Dictionary<uint, Entity>();
 
+        HistoryHandler _historyHandler;
         Quadtree<Entity> _hoveredEntities;
         Quadtree<Entity> _selectedEntities;
 
