@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Apos.Input;
@@ -211,6 +211,7 @@ namespace GameProject {
                 _selection.Rect = null;
             }
 
+            // TODO: This should probably not be done every single frame.
             if (_edit.Rect != null && !isEditDone) {
                 using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
                     e.MoveNext();
@@ -255,6 +256,9 @@ namespace GameProject {
                     }
                     _historyHandler.Commit();
                     _historyHandler.AutoCommit = true;
+
+                    _editRectStartXY = _edit.Rect.Value.Position;
+                    _editRectStartSize = _edit.Rect.Value.Size;
                 }
             }
 
