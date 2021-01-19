@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Apos.Input;
@@ -37,7 +37,6 @@ namespace GameProject {
             _historyHandler = new HistoryHandler(null);
 
             _quadtree = new Quadtree<Entity>();
-            _hoveredEntities = new Quadtree<Entity>();
             _selectedEntities = new Quadtree<Entity>();
             Camera.Setup();
             _selection = new RectEdit();
@@ -80,14 +79,8 @@ namespace GameProject {
             }
             var isSelectionDone = _selection.UpdateInput(Camera.MouseWorld);
 
-            Utility.ClearQuadtree(_hoveredEntities);
-            if (_selection.Rect != null) {
-                // Group element hover
-                var r = _selection.Rect.Value;
-                foreach (var e in _quadtree.Query(new RotRect(r.X, r.Y, r.Width, r.Height))) {
-                    _hoveredEntities.Add(e);
-                }
-            } else {
+            _hoveredEntity = null;
+            if (_selection.Rect == null) {
                 // Do a single element hover
                 bool addSelected = false;
                 if (_selectedEntities.Count() == 1) {
@@ -124,13 +117,13 @@ namespace GameProject {
                 }
 
                 if (hoverCount > 0) {
-                    _hoveredEntities.Add(hoverUnderMouse.ElementAt(Utility.Mod(hoverCount - 1 - _cycleIndex, hoverCount)));
+                    _hoveredEntity = hoverUnderMouse.ElementAt(Utility.Mod(hoverCount - 1 - _cycleIndex, hoverCount));
                 }
             }
 
             if (Triggers.RemoveEntity.Pressed()) {
                 _edit.Rect = null;
-                Utility.ClearQuadtree(_hoveredEntities);
+                _hoveredEntity = null;
                 var all = _selectedEntities.ToArray();
                 _historyHandler.AutoCommit = false;
                 foreach (var e in all) {
@@ -142,14 +135,14 @@ namespace GameProject {
             }
 
             if (Triggers.CreateEntity.Pressed()) {
-                Utility.ClearQuadtree(_hoveredEntities);
+                _hoveredEntity = null;
                 HistoryCreateEntity(GetNextId(), new RectangleF(Camera.MouseWorld, new Vector2(100, 100)), GetNextSortOrder());
 
                 isSelectionDone = true;
             }
 
             if (Triggers.SpawnStuff.Pressed()) {
-                Utility.ClearQuadtree(_hoveredEntities);
+                _hoveredEntity = null;
                 Random r = new Random();
                 _historyHandler.AutoCommit = false;
                 for (int i = 0; i < 10000; i++) {
@@ -172,12 +165,12 @@ namespace GameProject {
                 if (!shiftModifier && !ctrlModifier) {
                     Utility.ClearQuadtree(_selectedEntities);
                 }
-                if (ctrlModifier) {
-                    foreach (var e in _hoveredEntities) {
+                if (ctrlModifier && _selection.Rect != null) {
+                    foreach (var e in GetHovers()) {
                         _selectedEntities.Remove(e);
                     }
                 } else {
-                    foreach (var e in _hoveredEntities) {
+                    foreach (var e in GetHovers()) {
                         if (!_selectedEntities.Contains(e)) {
                             _selectedEntities.Add(e);
                         }
@@ -283,7 +276,7 @@ namespace GameProject {
 
             foreach (var e in _selectedEntities.Query(Camera.WorldBounds, Camera.Angle, Camera.Origin))
                 e.DrawHighlight(_s, 0f, 2f, Color.White);
-            foreach (var e in _hoveredEntities.Query(Camera.WorldBounds, Camera.Angle, Camera.Origin))
+            foreach (var e in GetHovers(true))
                 e.DrawHighlight(_s, -2f, 3f, Color.Black);
             _s.End();
 
@@ -334,13 +327,11 @@ namespace GameProject {
             Entity e = new Entity(id, r, sortOrder);
             _quadtree.Add(e);
             _entities.Add(e.Id, e);
-            _hoveredEntities.Add(e);
         }
         private void RemoveEntity(uint id) {
             Entity e = _entities[id];
             _quadtree.Remove(e);
             _entities.Remove(e.Id);
-            _hoveredEntities.Remove(e);
             _selectedEntities.Remove(e);
         }
         private void MoveEntity(uint id, Vector2 xy) {
@@ -349,7 +340,6 @@ namespace GameProject {
             bound.XY = xy;
             e.Bounds = bound;
             _quadtree.Update(e);
-            _hoveredEntities.Update(e);
             _selectedEntities.Update(e);
         }
         private void ResizeEntity(uint id, Vector2 size) {
@@ -358,8 +348,26 @@ namespace GameProject {
             bound.Size = size;
             e.Bounds = bound;
             _quadtree.Update(e);
-            _hoveredEntities.Update(e);
             _selectedEntities.Update(e);
+        }
+
+        private IEnumerable<Entity> GetHovers(bool withinCamera = false) {
+            if (_selection.Rect != null) {
+                if (!withinCamera) {
+                    var r = _selection.Rect.Value;
+                    foreach (var e in _quadtree.Query(new RotRect(r.X, r.Y, r.Width, r.Height)))
+                        yield return e;
+                } else {
+                    var origin = Camera.Origin;
+                    var worldBounds = new RectangleF(Camera.WorldBounds.Location.ToVector2() - origin, Camera.WorldBounds.Size);
+                    var r = _selection.Rect.Value.Intersection(worldBounds);
+                    foreach (var e in _quadtree.Query(new RotRect(r.X, r.Y, r.Width, r.Height)))
+                        yield return e;
+                }
+            } else if (_hoveredEntity != null) {
+                yield return _hoveredEntity;
+            }
+            yield break;
         }
 
         GraphicsDeviceManager _graphics;
@@ -378,7 +386,7 @@ namespace GameProject {
         Dictionary<uint, Entity> _entities = new Dictionary<uint, Entity>();
 
         HistoryHandler _historyHandler;
-        Quadtree<Entity> _hoveredEntities;
+        Entity? _hoveredEntity;
         Quadtree<Entity> _selectedEntities;
 
         FPSCounter _fps = new FPSCounter();
