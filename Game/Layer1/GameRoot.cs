@@ -96,13 +96,15 @@ namespace GameProject {
                 }
 
                 IOrderedEnumerable<Entity> hoverUnderMouse;
+                IOrderedEnumerable<Entity> selectedAndHovered;
                 if (addSelected) {
                     hoverUnderMouse = _quadtree.Query(Camera.MouseWorld).Append(_selectedEntities.First()).OrderBy(e => e);
+                    selectedAndHovered = _selectedEntities.Query(Camera.MouseWorld).Append(_selectedEntities.First()).OrderBy(e => e);
                 } else {
                     hoverUnderMouse = _quadtree.Query(Camera.MouseWorld).OrderBy(e => e);
+                    selectedAndHovered = _selectedEntities.Query(Camera.MouseWorld).OrderBy(e => e);
                 }
                 var hoverCount = hoverUnderMouse.Count();
-                var selectedAndHovered = _selectedEntities.Query(Camera.MouseWorld).OrderBy(e => e);
                 int cycleReset = 0;
                 if (selectedAndHovered.Count() > 0) {
                     cycleReset = hoverCount - 1 - hoverUnderMouse.ToList().IndexOf(selectedAndHovered.Last());
@@ -144,7 +146,6 @@ namespace GameProject {
                 HistoryCreateEntity(GetNextId(), new RectangleF(Camera.MouseWorld, new Vector2(100, 100)), GetNextSortOrder());
 
                 isSelectionDone = true;
-                _selection.Rect = null;
             }
 
             if (Triggers.SpawnStuff.Pressed()) {
@@ -165,7 +166,6 @@ namespace GameProject {
                 _historyHandler.AutoCommit = true;
 
                 isSelectionDone = true;
-                _selection.Rect = null;
             }
 
             if (isSelectionDone) {
