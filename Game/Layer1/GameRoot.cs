@@ -374,24 +374,24 @@ namespace GameProject {
             yield break;
         }
 
-        GraphicsDeviceManager _graphics;
-        SpriteBatch _s;
+        GraphicsDeviceManager _graphics = null!;
+        SpriteBatch _s = null!;
 
         uint _lastId = 0;
         uint _sortOrder = 0;
         int _cycleIndex = 0;
         Vector2? _cycleMouse = Vector2.Zero;
 
-        RectEdit _selection;
-        RectEdit _edit;
+        RectEdit _selection = null!;
+        RectEdit _edit = null!;
         Vector2 _editRectStartXY = Vector2.Zero;
         Vector2 _editRectStartSize = Vector2.Zero;
-        Quadtree<Entity> _quadtree;
+        Quadtree<Entity> _quadtree = null!;
         Dictionary<uint, Entity> _entities = new Dictionary<uint, Entity>();
 
-        HistoryHandler _historyHandler;
+        HistoryHandler _historyHandler = null!;
         Entity? _hoveredEntity;
-        Quadtree<Entity> _selectedEntities;
+        Quadtree<Entity> _selectedEntities = null!;
 
         FPSCounter _fps = new FPSCounter();
     }

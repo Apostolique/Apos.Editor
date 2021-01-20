@@ -36,14 +36,15 @@ namespace GameProject {
             s.DrawRectangle(Utility.ExpandRect(new RectangleF(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height), distance * Camera.ScreenToWorldScale), c, thickness * Camera.ScreenToWorldScale);
         }
 
-        public int CompareTo(Entity value) {
+        public int CompareTo(Entity? value) {
+            if (value == null) return 1;
             int compareTo = SortOrder.CompareTo(value.SortOrder);
             return compareTo == 0 ? Id.CompareTo(value.Id) : compareTo;
         }
         public override int GetHashCode() {
             return Id.GetHashCode();
         }
-        public override bool Equals(object obj) {
+        public override bool Equals(object? obj) {
             return obj is Entity && Id == ((Entity)obj).Id;
         }
     }

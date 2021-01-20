@@ -44,14 +44,14 @@ namespace GameProject {
             }
         }
 
-        static float Zoom {
+        private static float Zoom {
             get => MathF.Log(_camera.ZFromScale(_camera.Scale.X, 0f) + 1);
             set {
                 _camera.Scale = new Vector2(_camera.ScaleFromZ(MathF.Exp(value) - 1, 0f));
             }
         }
-        static Dcrew.Camera.Camera _camera;
-        static Vector2 _dragAnchor = Vector2.Zero;
-        static bool _isDragging = false;
+        private static Dcrew.Camera.Camera _camera = null!;
+        private static Vector2 _dragAnchor = Vector2.Zero;
+        private static bool _isDragging = false;
     }
 }

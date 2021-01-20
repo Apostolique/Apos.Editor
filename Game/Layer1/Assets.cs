@@ -13,6 +13,6 @@ namespace GameProject {
             FontSystem.AddFont(TitleContainer.OpenStream($"{content.RootDirectory}/SourceCodePro-Medium.ttf"));
         }
 
-        public static FontSystem FontSystem;
+        public static FontSystem FontSystem = null!;
     }
 }
