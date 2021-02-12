@@ -40,8 +40,8 @@ namespace GameProject {
         public static ICondition CreateEntity = new KeyboardCondition(Keys.Enter);
         public static ICondition RemoveEntity =
             new AnyCondition(
-                new KeyboardCondition(Keys.Back),
-                new KeyboardCondition(Keys.Delete)
+                new Track.KeyboardCondition(Keys.Back),
+                new Track.KeyboardCondition(Keys.Delete)
             );
         public static ICondition AddToSelection =
             new AnyCondition(
