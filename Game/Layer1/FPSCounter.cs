@@ -1,4 +1,5 @@
 using System;
+using Apos.Input;
 
 namespace GameProject {
     class FPSCounter {
@@ -30,13 +31,17 @@ namespace GameProject {
             timer += elapsedTime;
             if (timer <= _oneSecond) {
                 return;
+            } else if (timer > _oneSecond * 60) {
+                // This fixes a case where the game stops being update for a long time.
+                // For example when the computer is in sleep mode.
+                timer = _oneSecond * 60;
+                return;
             }
 
             UpdatePerSecond = _updateCounter;
             FramesPerSecond = _framesCounter;
             _updateCounter = 0;
             _framesCounter = 0;
-            // FIXME: This can fail if the game stops updating for a long time. For example when the computer is put to sleep.
             timer -= _oneSecond;
 
             TimePerUpdate = Math.Truncate(1000d / UpdatePerSecond * 10000) / 10000;
@@ -44,7 +49,7 @@ namespace GameProject {
                 TimePerFrame = Math.Truncate(1000d / FramesPerSecond * 10000) / 10000;
             }
 
-            if (FramesPerSecond < 60 && _totalTime > 3000) {
+            if (FramesPerSecond < 60 && _totalTime > 3000 && InputHelper.IsActive) {
                 DroppedFrames += 60 - FramesPerSecond;
             }
         }
