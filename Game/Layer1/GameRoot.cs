@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Apos.Input;
@@ -8,6 +8,8 @@ using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
+using Apos.Gui;
+using GameProject.UI;
 
 namespace GameProject {
     public class GameRoot : Game {
@@ -19,7 +21,6 @@ namespace GameProject {
 
         protected override void Initialize() {
             Window.AllowUserResizing = true;
-
             base.Initialize();
         }
 
@@ -45,19 +46,23 @@ namespace GameProject {
             Assets.LoadFonts(Content, GraphicsDevice);
             Assets.Setup(Content);
 
-            InputHelper.Setup(this);
+            _ui = new IMGUI();
+            GuiHelper.CurrentIMGUI = _ui;
+
+            GuiHelper.Setup(this, Assets.FontSystem);
         }
 
         protected override void Update(GameTime gameTime) {
             // TODO: Start creating an API over the entity quadtree dictionary, etc. For addition, removal, updates.
-            InputHelper.UpdateSetup();
+            GuiHelper.UpdateSetup();
             _fps.Update(gameTime.ElapsedGameTime.TotalMilliseconds);
+
+            _ui.UpdateAll(gameTime);
 
             if (Triggers.Quit.Pressed())
                 Exit();
 
-            if (Triggers.ResetDroppedFrames.Pressed())
-                _fps.DroppedFrames = 0;
+            if (Triggers.ResetDroppedFrames.Pressed()) _fps.DroppedFrames = 0;
             bool shiftModifier = Triggers.AddToSelection.Held();
             bool ctrlModifier = Triggers.RemoveFromSelection.Held();
 
@@ -163,6 +168,50 @@ namespace GameProject {
                 isSelectionDone = true;
             }
 
+            if (_edit.Rect != null) {
+                Sidebar.Put();
+                var rect = _edit.Rect.Value;
+                var newRect = rect;
+                string hoveredX = $"{rect.X}";
+                string hoveredY = $"{rect.Y}";
+                string hoveredWidth = $"{rect.Width}";
+                string hoveredHeight = $"{rect.Height}";
+                Label.Put("X");
+                Textbox.Put(ref hoveredX);
+                Label.Put("Y");
+                Textbox.Put(ref hoveredY);
+                if (_selectedEntities.Count() == 1) {
+                    Label.Put("Width");
+                    Textbox.Put(ref hoveredWidth);
+                    Label.Put("Height");
+                    Textbox.Put(ref hoveredHeight);
+                }
+
+                if (float.TryParse(hoveredX, out float newX)) {
+                    newRect.X = newX;
+                }
+                if (float.TryParse(hoveredY, out float newY)) {
+                    newRect.Y = newY;
+                }
+                if (float.TryParse(hoveredWidth, out float newWidth)) {
+                    if (newWidth > 0) {
+                        newRect.Width = newWidth;
+                    }
+                }
+                if (float.TryParse(hoveredHeight, out float newHeight)) {
+                    if (newHeight > 0) {
+                        newRect.Height = newHeight;
+                    }
+                }
+
+                if (rect.X != newRect.X || rect.Y != newRect.Y || rect.Width != newRect.Width || rect.Height != newRect.Height) {
+                    _edit.Rect = new RectangleF(newRect.X, newRect.Y, newRect.Width, newRect.Height);
+
+                    isEditDone = true;
+                }
+                Sidebar.Pop();
+            }
+
             if (isSelectionDone) {
                 if (!shiftModifier && !ctrlModifier) {
                     Utility.ClearQuadtree(_selectedEntities);
@@ -213,65 +262,65 @@ namespace GameProject {
                 _selection.Rect = null;
             }
 
-            // TODO: This should probably not be done every single frame.
-            if (_edit.Rect != null && !isEditDone) {
-                using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
-                    e.MoveNext();
-                    var first = e.Current;
-                    var bound = first.Bounds;
-                    bound.XY = first.Offset + _edit.Rect.Value.Position;
-                    first.Bounds = bound;
-
-                    while (e.MoveNext()) {
-                        var current = e.Current;
-                        bound = current.Bounds;
-                        bound.XY = current.Offset + first.Bounds.XY;
-                        current.Bounds = bound;
-                        _quadtree.Update(current);
-                        _selectedEntities.Update(current);
-                    }
-
-                    if (_selectedEntities.Count() == 1) {
-                        bound.Size = _edit.Rect.Value.Size;
+            if (_edit.Rect != null && (_editRectStartXY != (Vector2)_edit.Rect.Value.Position || _editRectStartSize != (Vector2)_edit.Rect.Value.Size)) {
+                if (!isEditDone) {
+                    using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
+                        e.MoveNext();
+                        var first = e.Current;
+                        var bound = first.Bounds;
+                        bound.XY = first.Offset + _edit.Rect.Value.Position;
                         first.Bounds = bound;
+
+                        while (e.MoveNext()) {
+                            var current = e.Current;
+                            bound = current.Bounds;
+                            bound.XY = current.Offset + first.Bounds.XY;
+                            current.Bounds = bound;
+                            _quadtree.Update(current);
+                            _selectedEntities.Update(current);
+                        }
+
+                        if (_selectedEntities.Count() == 1) {
+                            bound.Size = _edit.Rect.Value.Size;
+                            first.Bounds = bound;
+                        }
+                        _quadtree.Update(first);
+                        _selectedEntities.Update(first);
                     }
-                    _quadtree.Update(first);
-                    _selectedEntities.Update(first);
+                } else {
+                    using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
+                        _historyHandler.AutoCommit = false;
+                        e.MoveNext();
+                        var first = e.Current;
+                        Vector2 oldFirstStart = first.Offset + _editRectStartXY;
+                        Vector2 newFirstSTart = first.Offset + _edit.Rect.Value.Position;
+                        HistoryMoveEntity(first.Id, oldFirstStart, newFirstSTart);
+
+                        while (e.MoveNext()) {
+                            var current = e.Current;
+                            HistoryMoveEntity(current.Id, current.Offset + oldFirstStart, current.Offset + newFirstSTart);
+                        }
+
+                        if (_selectedEntities.Count() == 1) {
+                            HistoryResizeEntity(first.Id, _editRectStartSize, _edit.Rect.Value.Size);
+                        }
+                        _historyHandler.Commit();
+                        _historyHandler.AutoCommit = true;
+
+                        _editRectStartXY = _edit.Rect.Value.Position;
+                        _editRectStartSize = _edit.Rect.Value.Size;
+                    }
                 }
             }
-            if (_edit.Rect != null && isEditDone) {
-                using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
-                    _historyHandler.AutoCommit = false;
-                    e.MoveNext();
-                    var first = e.Current;
-                    Vector2 oldFirstStart = first.Offset + _editRectStartXY;
-                    Vector2 newFirstSTart = first.Offset + _edit.Rect.Value.Position;
-                    HistoryMoveEntity(first.Id, oldFirstStart, newFirstSTart);
 
-                    while (e.MoveNext()) {
-                        var current = e.Current;
-                        HistoryMoveEntity(current.Id, current.Offset + oldFirstStart, current.Offset + newFirstSTart);
-                    }
-
-                    if (_selectedEntities.Count() == 1) {
-                        HistoryResizeEntity(first.Id, _editRectStartSize, _edit.Rect.Value.Size);
-                    }
-                    _historyHandler.Commit();
-                    _historyHandler.AutoCommit = true;
-
-                    _editRectStartXY = _edit.Rect.Value.Position;
-                    _editRectStartSize = _edit.Rect.Value.Size;
-                }
-            }
-
-            InputHelper.UpdateCleanup();
+            GuiHelper.UpdateCleanup();
             base.Update(gameTime);
         }
 
         protected override void Draw(GameTime gameTime) {
             _fps.Draw();
 
-            GraphicsDevice.Clear(new Color(22, 22, 22));
+            GraphicsDevice.Clear(new Color(0, 0, 0));
 
             _s.Begin(transformMatrix: Camera.View);
             foreach (var e in _quadtree.Query(Camera.WorldBounds, Camera.Angle, Camera.Origin).OrderBy(e => e))
@@ -289,6 +338,7 @@ namespace GameProject {
             var font = Assets.FontSystem.GetFont(30);
             _s.Begin();
             // Draw UI
+            _ui.Draw(gameTime);
             _s.DrawString(font, $"fps: {_fps.FramesPerSecond} - Dropped Frames: {_fps.DroppedFrames} - Draw ms: {_fps.TimePerFrame} - Update ms: {_fps.TimePerUpdate}", new Vector2(10, 10), Color.White);
             _s.End();
 
@@ -383,6 +433,8 @@ namespace GameProject {
 
         GraphicsDeviceManager _graphics = null!;
         SpriteBatch _s = null!;
+
+        IMGUI _ui = null!;
 
         uint _lastId = 0;
         uint _sortOrder = 0;
