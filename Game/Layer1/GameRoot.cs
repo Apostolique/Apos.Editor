@@ -448,9 +448,12 @@ namespace GameProject {
         public void Paste(Vector2 anchor) {
             _hoveredEntity = null;
             _shouldAddNewToHover = true;
+            _historyHandler.AutoCommit = false;
             foreach (var e in _pasteBuffer) {
                 HistoryCreateEntity(GetNextId(), new RectangleF(anchor + e.Rect.Position, e.Rect.Size), GetNextSortOrder());
             }
+            _historyHandler.Commit();
+            _historyHandler.AutoCommit = true;
             _shouldAddNewToHover = false;
         }
 
