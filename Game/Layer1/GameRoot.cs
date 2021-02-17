@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Apos.Input;
@@ -136,7 +136,9 @@ namespace GameProject {
 
             if (Triggers.CreateEntity.Pressed()) {
                 _hoveredEntity = null;
+                _shouldAddNewToHover = true;
                 HistoryCreateEntity(GetNextId(), new RectangleF(Camera.MouseWorld, new Vector2(100, 100)), GetNextSortOrder());
+                _shouldAddNewToHover = false;
 
                 isSelectionDone = true;
             }
@@ -165,7 +167,7 @@ namespace GameProject {
                 if (!shiftModifier && !ctrlModifier) {
                     Utility.ClearQuadtree(_selectedEntities);
                 }
-                if (ctrlModifier && _selection.Rect != null) {
+                if (ctrlModifier) {
                     foreach (var e in GetHovers()) {
                         _selectedEntities.Remove(e);
                     }
@@ -331,6 +333,7 @@ namespace GameProject {
             Entity e = new Entity(id, r, sortOrder);
             _quadtree.Add(e);
             _entities.Add(e.Id, e);
+            if (_shouldAddNewToHover) _newEntitiesHover.Push(e.Id);
         }
         private void RemoveEntity(uint id) {
             Entity e = _entities[id];
@@ -356,7 +359,11 @@ namespace GameProject {
         }
 
         private IEnumerable<Entity> GetHovers(bool withinCamera = false) {
-            if (_selection.Rect != null) {
+            if (_newEntitiesHover.Count > 0) {
+                while (_newEntitiesHover.Count > 0) {
+                    yield return _entities[_newEntitiesHover.Pop()];
+                }
+            } else if (_selection.Rect != null) {
                 if (!withinCamera) {
                     var r = _selection.Rect.Value;
                     foreach (var e in _quadtree.Query(new RotRect(r.X, r.Y, r.Width, r.Height)))
@@ -388,6 +395,8 @@ namespace GameProject {
         Vector2 _editRectStartSize = Vector2.Zero;
         Quadtree<Entity> _quadtree = null!;
         Dictionary<uint, Entity> _entities = new Dictionary<uint, Entity>();
+        bool _shouldAddNewToHover = false;
+        Stack<uint> _newEntitiesHover = new Stack<uint>();
 
         HistoryHandler _historyHandler = null!;
         Entity? _hoveredEntity;
