@@ -16,6 +16,7 @@ namespace GameProject {
         public static ICondition CameraDrag = new MouseCondition(MouseButton.MiddleButton);
         public static ICondition SelectionDrag = new Track.MouseCondition(MouseButton.LeftButton);
 
+        // TODO: Figure out better hotkeys for copy, paste, cut. They need to not require Ctrl or Shift.
         public static ICondition Copy = new Track.KeyboardCondition(Keys.Y);
         public static ICondition Paste = new Track.KeyboardCondition(Keys.P);
         public static ICondition Cut = new Track.KeyboardCondition(Keys.D);
@@ -69,7 +70,7 @@ namespace GameProject {
                 SkipEdit
             );
 
-        public static ICondition SpawnStuff = new KeyboardCondition(Keys.F1);
+        public static ICondition CreateStuff = new KeyboardCondition(Keys.F1);
         public static ICondition ResetDroppedFrames = new KeyboardCondition(Keys.F2);
     }
 }

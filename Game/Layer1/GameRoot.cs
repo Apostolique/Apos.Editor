@@ -85,47 +85,7 @@ namespace GameProject {
             }
             var isSelectionDone = _selection.UpdateInput(Camera.MouseWorld);
 
-            _hoveredEntity = null;
-            if (_selection.Rect == null) {
-                // Do a single element hover
-                bool addSelected = false;
-                if (_selectedEntities.Count() == 1) {
-                    var bounds = _selectedEntities.First().Bounds;
-                    addSelected = !bounds.Contains(Camera.MouseWorld) && Utility.ExpandRect(new RectangleF(bounds.X, bounds.Y, bounds.Width, bounds.Height), _edit.HandleDistanceWorld).Contains(Camera.MouseWorld);
-                }
-
-                IOrderedEnumerable<Entity> hoverUnderMouse;
-                IOrderedEnumerable<Entity> selectedAndHovered;
-                if (addSelected) {
-                    hoverUnderMouse = _quadtree.Query(Camera.MouseWorld).Append(_selectedEntities.First()).OrderBy(e => e);
-                    selectedAndHovered = _selectedEntities.Query(Camera.MouseWorld).Append(_selectedEntities.First()).OrderBy(e => e);
-                } else {
-                    hoverUnderMouse = _quadtree.Query(Camera.MouseWorld).OrderBy(e => e);
-                    selectedAndHovered = _selectedEntities.Query(Camera.MouseWorld).OrderBy(e => e);
-                }
-                var hoverCount = hoverUnderMouse.Count();
-                int cycleReset = 0;
-                if (selectedAndHovered.Count() > 0) {
-                    cycleReset = hoverCount - 1 - hoverUnderMouse.ToList().IndexOf(selectedAndHovered.Last());
-                    if (_cycleMouse == null) {
-                        _cycleIndex = cycleReset;
-                    }
-                }
-
-                if (_cycleMouse != null && Vector2.DistanceSquared(_cycleMouse.Value, Camera.MouseWorld) > Utility.ScreenArea(10)) {
-                    _cycleIndex = cycleReset;
-                    _cycleMouse = null;
-                }
-                int scrollDelta = InputHelper.NewMouse.ScrollWheelValue - InputHelper.OldMouse.ScrollWheelValue;
-                if (scrollDelta != 0 && Triggers.SelectionCycle.Held()) {
-                    _cycleIndex += MathF.Sign(scrollDelta);
-                    _cycleMouse = Camera.MouseWorld;
-                }
-
-                if (hoverCount > 0) {
-                    _hoveredEntity = hoverUnderMouse.ElementAt(Utility.Mod(hoverCount - 1 - _cycleIndex, hoverCount));
-                }
-            }
+            SingleHover();
 
             if (Triggers.Remove.Pressed()) {
                 Remove();
@@ -135,11 +95,7 @@ namespace GameProject {
             }
 
             if (Triggers.Create.Pressed()) {
-                _hoveredEntity = null;
-                _shouldAddNewToHover = true;
-                HistoryCreateEntity(GetNextId(), new RectangleF(Camera.MouseWorld, new Vector2(100, 100)), GetNextSortOrder());
-                _shouldAddNewToHover = false;
-
+                Create();
                 isSelectionDone = true;
             }
             if (Triggers.Paste.Pressed()) {
@@ -147,23 +103,8 @@ namespace GameProject {
                 isSelectionDone = true;
             }
 
-            if (Triggers.SpawnStuff.Pressed()) {
-                _hoveredEntity = null;
-                Random r = new Random();
-                _historyHandler.AutoCommit = false;
-                for (int i = 0; i < 10000; i++) {
-                    var screenBounds = Camera.WorldBounds;
-                    var origin = Camera.Origin;
-                    float minX = screenBounds.Left;
-                    float maxX = screenBounds.Right;
-                    float minY = screenBounds.Top;
-                    float maxY = screenBounds.Bottom;
-
-                    HistoryCreateEntity(GetNextId(), new RectangleF(new Vector2(r.NextSingle(minX, maxX), r.NextSingle(minY, maxY)) - origin, new Vector2(r.NextSingle(50, 200), r.NextSingle(50, 200))), GetNextSortOrder());
-                }
-                _historyHandler.Commit();
-                _historyHandler.AutoCommit = true;
-
+            if (Triggers.CreateStuff.Pressed()) {
+                CreateStuff();
                 isSelectionDone = true;
             }
 
@@ -411,7 +352,51 @@ namespace GameProject {
             _selectedEntities.Update(e);
         }
 
-        public void Remove() {
+        private void SingleHover() {
+            _hoveredEntity = null;
+            if (_selection.Rect == null) {
+                // Do a single element hover
+                bool addSelected = false;
+                if (_selectedEntities.Count() == 1) {
+                    var bounds = _selectedEntities.First().Bounds;
+                    addSelected = !bounds.Contains(Camera.MouseWorld) && Utility.ExpandRect(new RectangleF(bounds.X, bounds.Y, bounds.Width, bounds.Height), _edit.HandleDistanceWorld).Contains(Camera.MouseWorld);
+                }
+
+                IOrderedEnumerable<Entity> hoverUnderMouse;
+                IOrderedEnumerable<Entity> selectedAndHovered;
+                if (addSelected) {
+                    hoverUnderMouse = _quadtree.Query(Camera.MouseWorld).Append(_selectedEntities.First()).OrderBy(e => e);
+                    selectedAndHovered = _selectedEntities.Query(Camera.MouseWorld).Append(_selectedEntities.First()).OrderBy(e => e);
+                } else {
+                    hoverUnderMouse = _quadtree.Query(Camera.MouseWorld).OrderBy(e => e);
+                    selectedAndHovered = _selectedEntities.Query(Camera.MouseWorld).OrderBy(e => e);
+                }
+                var hoverCount = hoverUnderMouse.Count();
+                int cycleReset = 0;
+                if (selectedAndHovered.Count() > 0) {
+                    cycleReset = hoverCount - 1 - hoverUnderMouse.ToList().IndexOf(selectedAndHovered.Last());
+                    if (_cycleMouse == null) {
+                        _cycleIndex = cycleReset;
+                    }
+                }
+
+                if (_cycleMouse != null && Vector2.DistanceSquared(_cycleMouse.Value, Camera.MouseWorld) > Utility.ScreenArea(10)) {
+                    _cycleIndex = cycleReset;
+                    _cycleMouse = null;
+                }
+                int scrollDelta = InputHelper.NewMouse.ScrollWheelValue - InputHelper.OldMouse.ScrollWheelValue;
+                if (scrollDelta != 0 && Triggers.SelectionCycle.Held()) {
+                    _cycleIndex += MathF.Sign(scrollDelta);
+                    _cycleMouse = Camera.MouseWorld;
+                }
+
+                if (hoverCount > 0) {
+                    _hoveredEntity = hoverUnderMouse.ElementAt(Utility.Mod(hoverCount - 1 - _cycleIndex, hoverCount));
+                }
+            }
+        }
+
+        private void Remove() {
             _edit.Rect = null;
             _hoveredEntity = null;
             var all = _selectedEntities.ToArray();
@@ -442,12 +427,33 @@ namespace GameProject {
                 }
             }
         }
-        public void Cut() {
+        private void Cut() {
             Copy();
             Remove();
         }
-        public void Paste(Vector2 anchor) {
-            _hoveredEntity = null;
+        private void Create() {
+            _shouldAddNewToHover = true;
+            HistoryCreateEntity(GetNextId(), new RectangleF(Camera.MouseWorld, new Vector2(100, 100)), GetNextSortOrder());
+            _shouldAddNewToHover = false;
+        }
+        private void CreateStuff() {
+            // TODO: Refactor random. Don't need to recreate it every time.
+            Random r = new Random();
+            _historyHandler.AutoCommit = false;
+            for (int i = 0; i < 10000; i++) {
+                var screenBounds = Camera.WorldBounds;
+                var origin = Camera.Origin;
+                float minX = screenBounds.Left;
+                float maxX = screenBounds.Right;
+                float minY = screenBounds.Top;
+                float maxY = screenBounds.Bottom;
+
+                HistoryCreateEntity(GetNextId(), new RectangleF(new Vector2(r.NextSingle(minX, maxX), r.NextSingle(minY, maxY)) - origin, new Vector2(r.NextSingle(50, 200), r.NextSingle(50, 200))), GetNextSortOrder());
+            }
+            _historyHandler.Commit();
+            _historyHandler.AutoCommit = true;
+        }
+        private void Paste(Vector2 anchor) {
             _shouldAddNewToHover = true;
             _historyHandler.AutoCommit = false;
             foreach (var e in _pasteBuffer) {
