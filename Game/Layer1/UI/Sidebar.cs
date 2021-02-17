@@ -41,6 +41,7 @@ namespace GameProject.UI {
 
             if (Clip.Contains(GuiHelper.Mouse) && Default.MouseInteraction.Pressed()) {
                 _pressed = true;
+                GrabFocus(this);
             }
             if (IsFocused) {
                 if (_pressed) {

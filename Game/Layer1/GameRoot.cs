@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Apos.Input;
@@ -59,8 +59,9 @@ namespace GameProject {
 
             _ui.UpdateAll(gameTime);
 
-            if (Triggers.Quit.Pressed())
-                Exit();
+            if (Triggers.SelectionDrag.Pressed(false)) {
+                _ui.GrabFocus(null);
+            }
 
             if (Triggers.ResetDroppedFrames.Pressed()) _fps.DroppedFrames = 0;
             bool shiftModifier = Triggers.AddToSelection.Held();
