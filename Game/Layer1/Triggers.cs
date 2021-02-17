@@ -16,6 +16,10 @@ namespace GameProject {
         public static ICondition CameraDrag = new MouseCondition(MouseButton.MiddleButton);
         public static ICondition SelectionDrag = new Track.MouseCondition(MouseButton.LeftButton);
 
+        public static ICondition Copy = new Track.KeyboardCondition(Keys.Y);
+        public static ICondition Paste = new Track.KeyboardCondition(Keys.P);
+        public static ICondition Cut = new Track.KeyboardCondition(Keys.D);
+
         public static ICondition Undo =
             new AllCondition(
                 new AnyCondition(
@@ -37,8 +41,8 @@ namespace GameProject {
                 new Track.KeyboardCondition(Keys.Z)
             );
 
-        public static ICondition CreateEntity = new KeyboardCondition(Keys.Enter);
-        public static ICondition RemoveEntity =
+        public static ICondition Create = new KeyboardCondition(Keys.Enter);
+        public static ICondition Remove =
             new AnyCondition(
                 new Track.KeyboardCondition(Keys.Back),
                 new Track.KeyboardCondition(Keys.Delete)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Apos.Input;
@@ -126,25 +126,23 @@ namespace GameProject {
                 }
             }
 
-            if (Triggers.RemoveEntity.Pressed()) {
-                _edit.Rect = null;
-                _hoveredEntity = null;
-                var all = _selectedEntities.ToArray();
-                _historyHandler.AutoCommit = false;
-                foreach (var e in all) {
-                    HistoryRemoveEntity(e.Id, new RectangleF(e.Bounds.XY, e.Bounds.Size), e.SortOrder);
-                    _selectedEntities.Remove(e);
-                }
-                _historyHandler.Commit();
-                _historyHandler.AutoCommit = true;
+            if (Triggers.Remove.Pressed()) {
+                Remove();
+            }
+            if (Triggers.Cut.Pressed()) {
+                Cut();
             }
 
-            if (Triggers.CreateEntity.Pressed()) {
+            if (Triggers.Create.Pressed()) {
                 _hoveredEntity = null;
                 _shouldAddNewToHover = true;
                 HistoryCreateEntity(GetNextId(), new RectangleF(Camera.MouseWorld, new Vector2(100, 100)), GetNextSortOrder());
                 _shouldAddNewToHover = false;
 
+                isSelectionDone = true;
+            }
+            if (Triggers.Paste.Pressed()) {
+                Paste(Camera.MouseWorld);
                 isSelectionDone = true;
             }
 
@@ -313,6 +311,10 @@ namespace GameProject {
                 }
             }
 
+            if (Triggers.Copy.Pressed()) {
+                Copy();
+            }
+
             GuiHelper.UpdateCleanup();
             base.Update(gameTime);
         }
@@ -408,6 +410,50 @@ namespace GameProject {
             _selectedEntities.Update(e);
         }
 
+        public void Remove() {
+            _edit.Rect = null;
+            _hoveredEntity = null;
+            var all = _selectedEntities.ToArray();
+            _historyHandler.AutoCommit = false;
+            foreach (var e in all) {
+                HistoryRemoveEntity(e.Id, new RectangleF(e.Bounds.XY, e.Bounds.Size), e.SortOrder);
+                _selectedEntities.Remove(e);
+            }
+            _historyHandler.Commit();
+            _historyHandler.AutoCommit = true;
+        }
+        private void Copy() {
+            // TODO: Might be nice to compute the bounding rectangle. Could be useful for centering.
+            if (_selectedEntities.Count() > 0) {
+                _pasteBuffer.Clear();
+                using (IEnumerator<Entity> e = _selectedEntities.OrderBy(e => e).GetEnumerator()) {
+                    e.MoveNext();
+                    var current = e.Current;
+                    var pos1 = current.Bounds.XY;
+                    _pasteBuffer.Enqueue(new EntityPaste(new RectangleF(0, 0, current.Bounds.Width, current.Bounds.Height)));
+
+                    while (e.MoveNext()) {
+                        current = e.Current;
+                        var pos2 = current.Bounds.XY;
+
+                        _pasteBuffer.Enqueue(new EntityPaste(new RectangleF(pos2 - pos1, new Vector2(current.Bounds.Width, current.Bounds.Height))));
+                    }
+                }
+            }
+        }
+        public void Cut() {
+            Copy();
+            Remove();
+        }
+        public void Paste(Vector2 anchor) {
+            _hoveredEntity = null;
+            _shouldAddNewToHover = true;
+            foreach (var e in _pasteBuffer) {
+                HistoryCreateEntity(GetNextId(), new RectangleF(anchor + e.Rect.Position, e.Rect.Size), GetNextSortOrder());
+            }
+            _shouldAddNewToHover = false;
+        }
+
         private IEnumerable<Entity> GetHovers(bool withinCamera = false) {
             if (_newEntitiesHover.Count > 0) {
                 while (_newEntitiesHover.Count > 0) {
@@ -441,18 +487,20 @@ namespace GameProject {
         int _cycleIndex = 0;
         Vector2? _cycleMouse = Vector2.Zero;
 
+        Quadtree<Entity> _quadtree = null!;
+        Dictionary<uint, Entity> _entities = new Dictionary<uint, Entity>();
+
         RectEdit _selection = null!;
         RectEdit _edit = null!;
         Vector2 _editRectStartXY = Vector2.Zero;
         Vector2 _editRectStartSize = Vector2.Zero;
-        Quadtree<Entity> _quadtree = null!;
-        Dictionary<uint, Entity> _entities = new Dictionary<uint, Entity>();
         bool _shouldAddNewToHover = false;
         Stack<uint> _newEntitiesHover = new Stack<uint>();
 
         HistoryHandler _historyHandler = null!;
         Entity? _hoveredEntity;
         Quadtree<Entity> _selectedEntities = null!;
+        Queue<EntityPaste> _pasteBuffer = new Queue<EntityPaste>();
 
         FPSCounter _fps = new FPSCounter();
     }

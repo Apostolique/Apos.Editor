@@ -48,4 +48,11 @@ namespace GameProject {
             return obj is Entity && Id == ((Entity)obj).Id;
         }
     }
+    public class EntityPaste {
+        public EntityPaste(RectangleF rect) {
+            Rect = rect;
+        }
+
+        public RectangleF Rect { get; set; }
+    }
 }
