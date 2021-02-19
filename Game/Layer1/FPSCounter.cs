@@ -32,7 +32,7 @@ namespace GameProject {
             if (timer <= _oneSecond) {
                 return;
             } else if (timer > _oneSecond * 60) {
-                // This fixes a case where the game stops being update for a long time.
+                // This fixes a case where the game stops being updated for a long time.
                 // For example when the computer is in sleep mode.
                 timer = _oneSecond * 60;
                 return;
