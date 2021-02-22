@@ -214,18 +214,19 @@ namespace GameProject {
         private void SingleHover() {
             _hoveredEntity = null;
             if (_selection.Rect == null) {
-                // Do a single element hover
                 bool addSelected = false;
+                Entity? first = null;
                 if (_selectedEntities.Count() == 1) {
-                    var bounds = _selectedEntities.First().Bounds;
+                    first = _selectedEntities.First();
+                    var bounds = first.Bounds;
                     addSelected = !bounds.Contains(Camera.MouseWorld) && Utility.ExpandRect(new RectangleF(bounds.X, bounds.Y, bounds.Width, bounds.Height), _edit.HandleDistanceWorld).Contains(Camera.MouseWorld);
                 }
 
                 IOrderedEnumerable<Entity> hoverUnderMouse;
                 IOrderedEnumerable<Entity> selectedAndHovered;
                 if (addSelected) {
-                    hoverUnderMouse = _quadtree.Query(Camera.MouseWorld).Append(_selectedEntities.First()).OrderBy(e => e);
-                    selectedAndHovered = _selectedEntities.Query(Camera.MouseWorld).Append(_selectedEntities.First()).OrderBy(e => e);
+                    hoverUnderMouse = _quadtree.Query(Camera.MouseWorld).Append(first!).OrderBy(e => e);
+                    selectedAndHovered = new Entity[] { first! }.OrderBy(e => 1);
                 } else {
                     hoverUnderMouse = _quadtree.Query(Camera.MouseWorld).OrderBy(e => e);
                     selectedAndHovered = _selectedEntities.Query(Camera.MouseWorld).OrderBy(e => e);
