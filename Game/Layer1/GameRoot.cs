@@ -216,42 +216,50 @@ namespace GameProject {
             if (_selection.Rect == null) {
                 bool addSelected = false;
                 Entity? first = null;
+                // If there's a single element selected, it can have resize handles. Expand it's bounds to see if we're hovering that.
                 if (_selectedEntities.Count() == 1) {
                     first = _selectedEntities.First();
                     var bounds = first.Bounds;
                     addSelected = !bounds.Contains(Camera.MouseWorld) && Utility.ExpandRect(new RectangleF(bounds.X, bounds.Y, bounds.Width, bounds.Height), _edit.HandleDistanceWorld).Contains(Camera.MouseWorld);
                 }
 
-                IOrderedEnumerable<Entity> hoverUnderMouse;
+                IOrderedEnumerable<Entity> hoversUnderMouse;
                 IOrderedEnumerable<Entity> selectedAndHovered;
                 if (addSelected) {
-                    hoverUnderMouse = _quadtree.Query(Camera.MouseWorld).Append(first!).OrderBy(e => e);
+                    hoversUnderMouse = _quadtree.Query(Camera.MouseWorld).Append(first!).OrderBy(e => e);
+                    // This can only happen when there's only 1 selection so we can do a special case here.
                     selectedAndHovered = new Entity[] { first! }.OrderBy(e => 1);
                 } else {
-                    hoverUnderMouse = _quadtree.Query(Camera.MouseWorld).OrderBy(e => e);
+                    hoversUnderMouse = _quadtree.Query(Camera.MouseWorld).OrderBy(e => e);
                     selectedAndHovered = _selectedEntities.Query(Camera.MouseWorld).OrderBy(e => e);
                 }
-                var hoverCount = hoverUnderMouse.Count();
-                int cycleReset = 0;
-                if (selectedAndHovered.Count() > 0) {
-                    cycleReset = hoverCount - 1 - hoverUnderMouse.ToList().IndexOf(selectedAndHovered.Last());
-                    if (_cycleMouse == null) {
-                        _cycleIndex = cycleReset;
-                    }
-                }
-
-                if (_cycleMouse != null && Vector2.DistanceSquared(_cycleMouse.Value, Camera.MouseWorld) > Utility.ScreenArea(10)) {
-                    _cycleIndex = cycleReset;
-                    _cycleMouse = null;
-                }
-                int scrollDelta = InputHelper.NewMouse.ScrollWheelValue - InputHelper.OldMouse.ScrollWheelValue;
-                if (scrollDelta != 0 && Triggers.SelectionCycle.Held()) {
-                    _cycleIndex += MathF.Sign(scrollDelta);
-                    _cycleMouse = Camera.MouseWorld;
-                }
-
+                var hoverCount = hoversUnderMouse.Count();
+                // Skip if there are no hovers.
                 if (hoverCount > 0) {
-                    _hoveredEntity = hoverUnderMouse.ElementAt(Utility.Mod(hoverCount - 1 - _cycleIndex, hoverCount));
+                    int cycleReset = 0;
+                    // If there's a selection, always give it priority over everything else.
+                    if (selectedAndHovered.Count() > 0) {
+                        cycleReset = hoverCount - 1 - hoversUnderMouse.ToList().IndexOf(selectedAndHovered.Last());
+                        // If we aren't cycling, then select the last selection. The one that is on top of everything.
+                        if (_cycleMouse == null) {
+                            _cycleIndex = cycleReset;
+                        }
+                    }
+
+                    // If we're current cycling over the hovers, we reset when the mouse moves enough.
+                    if (_cycleMouse != null && Vector2.DistanceSquared(_cycleMouse.Value, Camera.MouseWorld) > Utility.ScreenArea(10)) {
+                        _cycleIndex = cycleReset;
+                        _cycleMouse = null;
+                    }
+                    // If we want to cycle over the hovers, save current mouse position so that we can reset later.
+                    int scrollDelta = InputHelper.NewMouse.ScrollWheelValue - InputHelper.OldMouse.ScrollWheelValue;
+                    if (scrollDelta != 0 && Triggers.SelectionCycle.Held()) {
+                        _cycleIndex += MathF.Sign(scrollDelta);
+                        _cycleMouse = Camera.MouseWorld;
+                    }
+
+                    // Now we can do the selection.
+                    _hoveredEntity = hoversUnderMouse.ElementAt(Utility.Mod(hoverCount - 1 - _cycleIndex, hoverCount));
                 }
             }
         }
