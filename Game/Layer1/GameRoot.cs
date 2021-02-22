@@ -85,17 +85,16 @@ namespace GameProject {
             }
             var isSelectionDone = _selection.UpdateInput(Camera.MouseWorld);
 
-            SingleHover();
+            if (_edit.Rect != null) ApplyEdit(isEditDone);
 
-            if (Triggers.Remove.Pressed()) {
-                Remove();
-            }
-            if (Triggers.Cut.Pressed()) {
-                Cut();
-            }
+            SingleHover();
 
             if (Triggers.Create.Pressed()) {
                 Create();
+                isSelectionDone = true;
+            }
+            if (Triggers.CreateStuff.Pressed()) {
+                CreateStuff();
                 isSelectionDone = true;
             }
             if (Triggers.Paste.Pressed()) {
@@ -103,156 +102,16 @@ namespace GameProject {
                 isSelectionDone = true;
             }
 
-            if (Triggers.CreateStuff.Pressed()) {
-                CreateStuff();
-                isSelectionDone = true;
-            }
-
-            if (_edit.Rect != null) {
-                Sidebar.Put();
-                var rect = _edit.Rect.Value;
-                var newRect = rect;
-                string hoveredX = $"{rect.X}";
-                string hoveredY = $"{rect.Y}";
-                string hoveredWidth = $"{rect.Width}";
-                string hoveredHeight = $"{rect.Height}";
-                Label.Put("X");
-                Textbox.Put(ref hoveredX);
-                Label.Put("Y");
-                Textbox.Put(ref hoveredY);
-                if (_selectedEntities.Count() == 1) {
-                    Label.Put("Width");
-                    Textbox.Put(ref hoveredWidth);
-                    Label.Put("Height");
-                    Textbox.Put(ref hoveredHeight);
-                }
-
-                if (float.TryParse(hoveredX, out float newX)) {
-                    newRect.X = newX;
-                }
-                if (float.TryParse(hoveredY, out float newY)) {
-                    newRect.Y = newY;
-                }
-                if (float.TryParse(hoveredWidth, out float newWidth)) {
-                    if (newWidth > 0) {
-                        newRect.Width = newWidth;
-                    }
-                }
-                if (float.TryParse(hoveredHeight, out float newHeight)) {
-                    if (newHeight > 0) {
-                        newRect.Height = newHeight;
-                    }
-                }
-
-                if (rect.X != newRect.X || rect.Y != newRect.Y || rect.Width != newRect.Width || rect.Height != newRect.Height) {
-                    _edit.Rect = new RectangleF(newRect.X, newRect.Y, newRect.Width, newRect.Height);
-
-                    isEditDone = true;
-                }
-                Sidebar.Pop();
-            }
-
             if (isSelectionDone) {
-                if (!shiftModifier && !ctrlModifier) {
-                    Utility.ClearQuadtree(_selectedEntities);
-                }
-                if (ctrlModifier) {
-                    foreach (var e in GetHovers()) {
-                        _selectedEntities.Remove(e);
-                    }
-                } else {
-                    foreach (var e in GetHovers()) {
-                        if (!_selectedEntities.Contains(e)) {
-                            _selectedEntities.Add(e);
-                        }
-                    }
-                }
-
-                if (_selectedEntities.Count() >= 1) {
-                    using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
-                        e.MoveNext();
-                        var first = e.Current;
-                        var pos1 = first.Bounds.XY;
-
-                        float x1 = first.Bounds.X;
-                        float x2 = first.Bounds.X + first.Bounds.Width;
-                        float y1 = first.Bounds.Y;
-                        float y2 = first.Bounds.Y + first.Bounds.Height;
-
-                        while (e.MoveNext()) {
-                            var current = e.Current;
-                            x1 = MathF.Min(current.Bounds.X, x1);
-                            x2 = MathF.Max(current.Bounds.X + current.Bounds.Width, x2);
-                            y1 = MathF.Min(current.Bounds.Y, y1);
-                            y2 = MathF.Max(current.Bounds.Y + current.Bounds.Height, y2);
-
-                            var pos2 = current.Bounds.XY;
-                            current.Offset = pos2 - pos1;
-                        }
-
-                        _edit.IsResizable = _selectedEntities.Count() == 1;
-                        _editRectStartXY = new Vector2(x1, y1);
-                        _editRectStartSize = new Vector2(x2 - x1, y2 - y1);
-                        _edit.Rect = new RectangleF(_editRectStartXY, _editRectStartSize);
-                        first.Offset = pos1 - _editRectStartXY;
-                    }
-                } else {
-                    _edit.Rect = null;
-                }
-                _selection.Rect = null;
+                ApplySelection(shiftModifier, ctrlModifier);
             }
 
-            if (_edit.Rect != null && (_editRectStartXY != (Vector2)_edit.Rect.Value.Position || _editRectStartSize != (Vector2)_edit.Rect.Value.Size)) {
-                if (!isEditDone) {
-                    using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
-                        e.MoveNext();
-                        var first = e.Current;
-                        var bound = first.Bounds;
-                        bound.XY = first.Offset + _edit.Rect.Value.Position;
-                        first.Bounds = bound;
-
-                        while (e.MoveNext()) {
-                            var current = e.Current;
-                            bound = current.Bounds;
-                            bound.XY = current.Offset + first.Bounds.XY;
-                            current.Bounds = bound;
-                            _quadtree.Update(current);
-                            _selectedEntities.Update(current);
-                        }
-
-                        if (_selectedEntities.Count() == 1) {
-                            bound.Size = _edit.Rect.Value.Size;
-                            first.Bounds = bound;
-                        }
-                        _quadtree.Update(first);
-                        _selectedEntities.Update(first);
-                    }
-                } else {
-                    using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
-                        _historyHandler.AutoCommit = false;
-                        e.MoveNext();
-                        var first = e.Current;
-                        Vector2 oldFirstStart = first.Offset + _editRectStartXY;
-                        Vector2 newFirstSTart = first.Offset + _edit.Rect.Value.Position;
-                        HistoryMoveEntity(first.Id, oldFirstStart, newFirstSTart);
-
-                        while (e.MoveNext()) {
-                            var current = e.Current;
-                            HistoryMoveEntity(current.Id, current.Offset + oldFirstStart, current.Offset + newFirstSTart);
-                        }
-
-                        if (_selectedEntities.Count() == 1) {
-                            HistoryResizeEntity(first.Id, _editRectStartSize, _edit.Rect.Value.Size);
-                        }
-                        _historyHandler.Commit();
-                        _historyHandler.AutoCommit = true;
-
-                        _editRectStartXY = _edit.Rect.Value.Position;
-                        _editRectStartSize = _edit.Rect.Value.Size;
-                    }
-                }
+            if (Triggers.Remove.Pressed()) {
+                Remove();
             }
-
+            if (Triggers.Cut.Pressed()) {
+                Cut();
+            }
             if (Triggers.Copy.Pressed()) {
                 Copy();
             }
@@ -283,7 +142,7 @@ namespace GameProject {
             _s.Begin();
             // Draw UI
             _ui.Draw(gameTime);
-            _s.DrawString(font, $"fps: {_fps.FramesPerSecond} - Dropped Frames: {_fps.DroppedFrames} - Draw ms: {_fps.TimePerFrame} - Update ms: {_fps.TimePerUpdate}", new Vector2(10, 10), Color.White);
+            // _s.DrawString(font, $"fps: {_fps.FramesPerSecond} - Dropped Frames: {_fps.DroppedFrames} - Draw ms: {_fps.TimePerFrame} - Update ms: {_fps.TimePerUpdate}", new Vector2(10, 10), Color.White);
             _s.End();
 
             base.Draw(gameTime);
@@ -392,6 +251,150 @@ namespace GameProject {
 
                 if (hoverCount > 0) {
                     _hoveredEntity = hoverUnderMouse.ElementAt(Utility.Mod(hoverCount - 1 - _cycleIndex, hoverCount));
+                }
+            }
+        }
+
+        private void ApplySelection(bool shiftModifier, bool ctrlModifier) {
+            if (!shiftModifier && !ctrlModifier) {
+                Utility.ClearQuadtree(_selectedEntities);
+            }
+            if (ctrlModifier) {
+                foreach (var e in GetHovers()) {
+                    _selectedEntities.Remove(e);
+                }
+            } else {
+                foreach (var e in GetHovers()) {
+                    if (!_selectedEntities.Contains(e)) {
+                        _selectedEntities.Add(e);
+                    }
+                }
+            }
+
+            if (_selectedEntities.Count() >= 1) {
+                using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
+                    e.MoveNext();
+                    var first = e.Current;
+                    var pos1 = first.Bounds.XY;
+
+                    float x1 = first.Bounds.X;
+                    float x2 = first.Bounds.X + first.Bounds.Width;
+                    float y1 = first.Bounds.Y;
+                    float y2 = first.Bounds.Y + first.Bounds.Height;
+
+                    while (e.MoveNext()) {
+                        var current = e.Current;
+                        x1 = MathF.Min(current.Bounds.X, x1);
+                        x2 = MathF.Max(current.Bounds.X + current.Bounds.Width, x2);
+                        y1 = MathF.Min(current.Bounds.Y, y1);
+                        y2 = MathF.Max(current.Bounds.Y + current.Bounds.Height, y2);
+
+                        var pos2 = current.Bounds.XY;
+                        current.Offset = pos2 - pos1;
+                    }
+
+                    _edit.IsResizable = _selectedEntities.Count() == 1;
+                    _editRectStartXY = new Vector2(x1, y1);
+                    _editRectStartSize = new Vector2(x2 - x1, y2 - y1);
+                    _edit.Rect = new RectangleF(_editRectStartXY, _editRectStartSize);
+                    first.Offset = pos1 - _editRectStartXY;
+                }
+            } else {
+                _edit.Rect = null;
+            }
+            _selection.Rect = null;
+        }
+        private void ApplyEdit(bool isDone) {
+            Sidebar.Put();
+            var rect = _edit.Rect!.Value;
+            var newRect = rect;
+            string hoveredX = $"{rect.X}";
+            string hoveredY = $"{rect.Y}";
+            string hoveredWidth = $"{rect.Width}";
+            string hoveredHeight = $"{rect.Height}";
+            Label.Put("X");
+            Textbox.Put(ref hoveredX);
+            Label.Put("Y");
+            Textbox.Put(ref hoveredY);
+            if (_selectedEntities.Count() == 1) {
+                Label.Put("Width");
+                Textbox.Put(ref hoveredWidth);
+                Label.Put("Height");
+                Textbox.Put(ref hoveredHeight);
+            }
+
+            if (float.TryParse(hoveredX, out float newX)) {
+                newRect.X = newX;
+            }
+            if (float.TryParse(hoveredY, out float newY)) {
+                newRect.Y = newY;
+            }
+            if (float.TryParse(hoveredWidth, out float newWidth)) {
+                if (newWidth > 0) {
+                    newRect.Width = newWidth;
+                }
+            }
+            if (float.TryParse(hoveredHeight, out float newHeight)) {
+                if (newHeight > 0) {
+                    newRect.Height = newHeight;
+                }
+            }
+
+            if (rect.X != newRect.X || rect.Y != newRect.Y || rect.Width != newRect.Width || rect.Height != newRect.Height) {
+                _edit.Rect = new RectangleF(newRect.X, newRect.Y, newRect.Width, newRect.Height);
+
+                isDone = true;
+            }
+            Sidebar.Pop();
+
+            if (_editRectStartXY != (Vector2)_edit.Rect.Value.Position || _editRectStartSize != (Vector2)_edit.Rect.Value.Size) {
+                if (!isDone) {
+                    using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
+                        e.MoveNext();
+                        var first = e.Current;
+                        var bound = first.Bounds;
+                        bound.XY = first.Offset + _edit.Rect.Value.Position;
+                        first.Bounds = bound;
+
+                        while (e.MoveNext()) {
+                            var current = e.Current;
+                            bound = current.Bounds;
+                            bound.XY = current.Offset + first.Bounds.XY;
+                            current.Bounds = bound;
+                            _quadtree.Update(current);
+                            _selectedEntities.Update(current);
+                        }
+
+                        if (_selectedEntities.Count() == 1) {
+                            bound.Size = _edit.Rect.Value.Size;
+                            first.Bounds = bound;
+                        }
+                        _quadtree.Update(first);
+                        _selectedEntities.Update(first);
+                    }
+                } else {
+                    using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
+                        _historyHandler.AutoCommit = false;
+                        e.MoveNext();
+                        var first = e.Current;
+                        Vector2 oldFirstStart = first.Offset + _editRectStartXY;
+                        Vector2 newFirstSTart = first.Offset + _edit.Rect.Value.Position;
+                        HistoryMoveEntity(first.Id, oldFirstStart, newFirstSTart);
+
+                        while (e.MoveNext()) {
+                            var current = e.Current;
+                            HistoryMoveEntity(current.Id, current.Offset + oldFirstStart, current.Offset + newFirstSTart);
+                        }
+
+                        if (_selectedEntities.Count() == 1) {
+                            HistoryResizeEntity(first.Id, _editRectStartSize, _edit.Rect.Value.Size);
+                        }
+                        _historyHandler.Commit();
+                        _historyHandler.AutoCommit = true;
+
+                        _editRectStartXY = _edit.Rect.Value.Position;
+                        _editRectStartSize = _edit.Rect.Value.Size;
+                    }
                 }
             }
         }
