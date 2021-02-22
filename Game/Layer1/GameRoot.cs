@@ -182,6 +182,13 @@ namespace GameProject {
                 ResizeEntity(id, newSize);
             });
         }
+        private void HistoryOrderEntity(uint id, uint oldOrder, uint newOrder) {
+            _historyHandler.Add(() => {
+                OrderEntity(id, oldOrder);
+            }, () => {
+                OrderEntity(id, newOrder);
+            });
+        }
         private void CreateEntity(uint id, RectangleF r, uint sortOrder) {
             Entity e = new Entity(id, r, sortOrder);
             _quadtree.Add(e);
@@ -209,6 +216,10 @@ namespace GameProject {
             e.Bounds = bound;
             _quadtree.Update(e);
             _selectedEntities.Update(e);
+        }
+        private void OrderEntity(uint id, uint order) {
+            Entity e = _entities[id];
+            e.SortOrder = order;
         }
 
         private void SingleHover() {
