@@ -10,8 +10,8 @@ namespace GameProject {
                 new GamePadCondition(GamePadButton.Back, 0)
             );
 
-        public static ICondition RotateLeft = new KeyboardCondition(Keys.OemComma);
-        public static ICondition RotateRight = new KeyboardCondition(Keys.OemPeriod);
+        public static ICondition RotateLeft = new Track.KeyboardCondition(Keys.OemComma);
+        public static ICondition RotateRight = new Track.KeyboardCondition(Keys.OemPeriod);
 
         public static ICondition CameraDrag = new MouseCondition(MouseButton.MiddleButton);
         public static ICondition SelectionDrag = new Track.MouseCondition(MouseButton.LeftButton);
@@ -41,7 +41,7 @@ namespace GameProject {
                 new Track.KeyboardCondition(Keys.Z)
             );
 
-        public static ICondition Create = new KeyboardCondition(Keys.Enter);
+        public static ICondition Create = new Track.KeyboardCondition(Keys.Enter);
         public static ICondition Remove =
             new AnyCondition(
                 new Track.KeyboardCondition(Keys.Back),
