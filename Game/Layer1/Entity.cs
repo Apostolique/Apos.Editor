@@ -24,7 +24,13 @@ namespace GameProject {
             get;
             set;
         }
+
+        // Not really part of the object. Useful for the editor.
         public Vector2 Offset {
+            get;
+            set;
+        }
+        public uint NextSortOrder {
             get;
             set;
         }

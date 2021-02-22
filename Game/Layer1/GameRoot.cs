@@ -106,6 +106,10 @@ namespace GameProject {
                 ApplySelection(shiftModifier, ctrlModifier);
             }
 
+            if (Triggers.ResetSortOrder.Pressed()) {
+                ResetOrder();
+            }
+
             if (Triggers.Remove.Pressed()) {
                 Remove();
             }
@@ -284,8 +288,15 @@ namespace GameProject {
                     _selectedEntities.Remove(e);
                 }
             } else {
-                foreach (var e in GetHovers()) {
+                bool preserveOrder = _selectedEntities.Count() == 0;
+                foreach (var e in GetHovers().OrderBy(e => e)) {
                     if (!_selectedEntities.Contains(e)) {
+                        if (preserveOrder) {
+                            e.NextSortOrder = e.SortOrder;
+                        } else {
+                            e.NextSortOrder = ++_lastSortOrder;
+                        }
+                        _lastSortOrder = e.NextSortOrder;
                         _selectedEntities.Add(e);
                     }
                 }
@@ -419,6 +430,14 @@ namespace GameProject {
             }
         }
 
+        private void ResetOrder() {
+            _historyHandler.AutoCommit = false;
+            foreach (var e in _selectedEntities) {
+                HistoryOrderEntity(e.Id, e.SortOrder, e.NextSortOrder);
+            }
+            _historyHandler.Commit();
+            _historyHandler.AutoCommit = true;
+        }
         private void Remove() {
             _edit.Rect = null;
             _hoveredEntity = null;
@@ -534,6 +553,7 @@ namespace GameProject {
         Entity? _hoveredEntity;
         Quadtree<Entity> _selectedEntities = null!;
         Queue<EntityPaste> _pasteBuffer = new Queue<EntityPaste>();
+        uint _lastSortOrder = 0;
 
         FPSCounter _fps = new FPSCounter();
     }

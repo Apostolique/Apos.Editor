@@ -68,6 +68,8 @@ namespace GameProject {
                 RemoveFromSelection,
                 SkipEdit
             );
+        public static ICondition ResetSortOrder =
+            new KeyboardCondition(Keys.O);
 
         public static ICondition CreateStuff = new KeyboardCondition(Keys.F1);
         public static ICondition ResetDroppedFrames = new KeyboardCondition(Keys.F2);
