@@ -106,7 +106,7 @@ namespace GameProject {
                 ApplySelection(shiftModifier, ctrlModifier);
             }
 
-            if (Triggers.ResetSortOrder.Pressed()) {
+            if (Triggers.ResetOrder.Pressed()) {
                 ResetOrder();
             }
 
@@ -155,19 +155,19 @@ namespace GameProject {
         private uint GetNextId() {
             return _lastId++;
         }
-        private uint GetNextSortOrder() {
-            return _sortOrder++;
+        private uint GetNextOrder() {
+            return _order++;
         }
-        private void HistoryCreateEntity(uint id, RectangleF r, uint sortOrder) {
+        private void HistoryCreateEntity(uint id, RectangleF r, uint order) {
             _historyHandler.Add(() => {
                 RemoveEntity(id);
             }, () => {
-                CreateEntity(id, r, sortOrder);
+                CreateEntity(id, r, order);
             });
         }
-        private void HistoryRemoveEntity(uint id, RectangleF r, uint sortOrder) {
+        private void HistoryRemoveEntity(uint id, RectangleF r, uint order) {
             _historyHandler.Add(() => {
-                CreateEntity(id, r, sortOrder);
+                CreateEntity(id, r, order);
             }, () => {
                 RemoveEntity(id);
             });
@@ -193,8 +193,8 @@ namespace GameProject {
                 OrderEntity(id, newOrder);
             });
         }
-        private void CreateEntity(uint id, RectangleF r, uint sortOrder) {
-            Entity e = new Entity(id, r, sortOrder);
+        private void CreateEntity(uint id, RectangleF r, uint order) {
+            Entity e = new Entity(id, r, order);
             _quadtree.Add(e);
             _entities.Add(e.Id, e);
             if (_shouldAddNewToHover) _newEntitiesHover.Push(e.Id);
@@ -223,7 +223,7 @@ namespace GameProject {
         }
         private void OrderEntity(uint id, uint order) {
             Entity e = _entities[id];
-            e.SortOrder = order;
+            e.Order = order;
         }
 
         private void SingleHover() {
@@ -292,11 +292,11 @@ namespace GameProject {
                 foreach (var e in GetHovers().OrderBy(e => e)) {
                     if (!_selectedEntities.Contains(e)) {
                         if (preserveOrder) {
-                            e.NextSortOrder = e.SortOrder;
+                            e.NextOrder = e.Order;
                         } else {
-                            e.NextSortOrder = ++_lastSortOrder;
+                            e.NextOrder = ++_lastOrder;
                         }
-                        _lastSortOrder = e.NextSortOrder;
+                        _lastOrder = e.NextOrder;
                         _selectedEntities.Add(e);
                     }
                 }
@@ -433,7 +433,7 @@ namespace GameProject {
         private void ResetOrder() {
             _historyHandler.AutoCommit = false;
             foreach (var e in _selectedEntities) {
-                HistoryOrderEntity(e.Id, e.SortOrder, e.NextSortOrder);
+                HistoryOrderEntity(e.Id, e.Order, e.NextOrder);
             }
             _historyHandler.Commit();
             _historyHandler.AutoCommit = true;
@@ -444,7 +444,7 @@ namespace GameProject {
             var all = _selectedEntities.ToArray();
             _historyHandler.AutoCommit = false;
             foreach (var e in all) {
-                HistoryRemoveEntity(e.Id, new RectangleF(e.Bounds.XY, e.Bounds.Size), e.SortOrder);
+                HistoryRemoveEntity(e.Id, new RectangleF(e.Bounds.XY, e.Bounds.Size), e.Order);
                 _selectedEntities.Remove(e);
             }
             _historyHandler.Commit();
@@ -475,7 +475,7 @@ namespace GameProject {
         }
         private void Create() {
             _shouldAddNewToHover = true;
-            HistoryCreateEntity(GetNextId(), new RectangleF(Camera.MouseWorld, new Vector2(100, 100)), GetNextSortOrder());
+            HistoryCreateEntity(GetNextId(), new RectangleF(Camera.MouseWorld, new Vector2(100, 100)), GetNextOrder());
             _shouldAddNewToHover = false;
         }
         private void CreateStuff() {
@@ -490,7 +490,7 @@ namespace GameProject {
                 float minY = screenBounds.Top;
                 float maxY = screenBounds.Bottom;
 
-                HistoryCreateEntity(GetNextId(), new RectangleF(new Vector2(r.NextSingle(minX, maxX), r.NextSingle(minY, maxY)) - origin, new Vector2(r.NextSingle(50, 200), r.NextSingle(50, 200))), GetNextSortOrder());
+                HistoryCreateEntity(GetNextId(), new RectangleF(new Vector2(r.NextSingle(minX, maxX), r.NextSingle(minY, maxY)) - origin, new Vector2(r.NextSingle(50, 200), r.NextSingle(50, 200))), GetNextOrder());
             }
             _historyHandler.Commit();
             _historyHandler.AutoCommit = true;
@@ -499,7 +499,7 @@ namespace GameProject {
             _shouldAddNewToHover = true;
             _historyHandler.AutoCommit = false;
             foreach (var e in _pasteBuffer) {
-                HistoryCreateEntity(GetNextId(), new RectangleF(anchor + e.Rect.Position, e.Rect.Size), GetNextSortOrder());
+                HistoryCreateEntity(GetNextId(), new RectangleF(anchor + e.Rect.Position, e.Rect.Size), GetNextOrder());
             }
             _historyHandler.Commit();
             _historyHandler.AutoCommit = true;
@@ -535,7 +535,7 @@ namespace GameProject {
         IMGUI _ui = null!;
 
         uint _lastId = 0;
-        uint _sortOrder = 0;
+        uint _order = 0;
         int _cycleIndex = 0;
         Vector2? _cycleMouse = Vector2.Zero;
 
@@ -553,7 +553,7 @@ namespace GameProject {
         Entity? _hoveredEntity;
         Quadtree<Entity> _selectedEntities = null!;
         Queue<EntityPaste> _pasteBuffer = new Queue<EntityPaste>();
-        uint _lastSortOrder = 0;
+        uint _lastOrder = 0;
 
         FPSCounter _fps = new FPSCounter();
     }

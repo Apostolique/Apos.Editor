@@ -6,10 +6,10 @@ using MonoGame.Extended;
 
 namespace GameProject {
     public class Entity : IBounds, IComparable<Entity> {
-        public Entity(uint id, RectangleF r, uint sortOrder) {
+        public Entity(uint id, RectangleF r, uint order) {
             Id = id;
             Bounds = new RotRect(r.X, r.Y, r.Width, r.Height);
-            SortOrder = sortOrder;
+            Order = order;
         }
 
         public uint Id {
@@ -20,7 +20,7 @@ namespace GameProject {
             get;
             set;
         }
-        public uint SortOrder {
+        public uint Order {
             get;
             set;
         }
@@ -30,7 +30,7 @@ namespace GameProject {
             get;
             set;
         }
-        public uint NextSortOrder {
+        public uint NextOrder {
             get;
             set;
         }
@@ -44,7 +44,7 @@ namespace GameProject {
 
         public int CompareTo(Entity? value) {
             if (value == null) return 1;
-            int compareTo = SortOrder.CompareTo(value.SortOrder);
+            int compareTo = Order.CompareTo(value.Order);
             return compareTo == 0 ? Id.CompareTo(value.Id) : compareTo;
         }
         public override int GetHashCode() {
