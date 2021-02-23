@@ -6,13 +6,18 @@ using Microsoft.Xna.Framework.Graphics;
 namespace GameProject {
     public static class Assets {
         public static void Setup(ContentManager content) {
+            LoadTextures(content);
         }
 
         public static void LoadFonts(ContentManager content, GraphicsDevice graphicsDevice) {
             FontSystem = FontSystemFactory.Create(graphicsDevice, 2048, 2048);
             FontSystem.AddFont(TitleContainer.OpenStream($"{content.RootDirectory}/SourceCodePro-Medium.ttf"));
         }
+        public static void LoadTextures(ContentManager content) {
+            Tiles = content.Load<Texture2D>("tiles");
+        }
 
         public static FontSystem FontSystem = null!;
+        public static Texture2D Tiles = null!;
     }
 }

@@ -19,6 +19,7 @@ namespace GameProject {
         protected override void LoadContent() {
             _s = new SpriteBatch(GraphicsDevice);
 
+            // TODO: Preserve settings.
             Settings settings = Utility.LoadJson<Settings>("Settings.json");
 
             _graphics.PreferredBackBufferWidth = settings.Width;
@@ -27,15 +28,15 @@ namespace GameProject {
             _graphics.SynchronizeWithVerticalRetrace = settings.IsVSync;
             _graphics.ApplyChanges();
 
-            Camera.Setup();
-
-            _world = new World();
-            _editor = new Editor(_world);
-
             Assets.LoadFonts(Content, GraphicsDevice);
             Assets.Setup(Content);
 
+            Camera.Setup();
+
             GuiHelper.Setup(this, Assets.FontSystem);
+
+            _world = new World();
+            _editor = new Editor(_world);
         }
 
         protected override void Update(GameTime gameTime) {
@@ -55,7 +56,7 @@ namespace GameProject {
 
             GraphicsDevice.Clear(new Color(0, 0, 0));
 
-            _s.Begin(transformMatrix: Camera.View);
+            _s.Begin(transformMatrix: Camera.View, samplerState: SamplerState.PointClamp);
             foreach (var e in _world.Quadtree.Query(Camera.WorldBounds, Camera.Angle, Camera.Origin).OrderBy(e => e))
                 e.Draw(_s);
             _editor.Draw(_s);

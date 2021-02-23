@@ -55,7 +55,7 @@ namespace GameProject {
             }
             var isSelectionDone = _selection.UpdateInput(Camera.MouseWorld);
 
-            if (_edit.Rect != null) ApplyEdit(isEditDone);
+            ApplyEdit(isEditDone);
 
             SingleHover();
 
@@ -109,16 +109,16 @@ namespace GameProject {
         private uint GetNextOrder() {
             return _order++;
         }
-        private void HistoryCreateEntity(uint id, RectangleF r, uint order) {
+        private void HistoryCreateEntity(uint id, RectangleF r, uint order, Tile.Type type) {
             _historyHandler.Add(() => {
                 RemoveEntity(id);
             }, () => {
-                CreateEntity(id, r, order);
+                CreateEntity(id, r, order, type);
             });
         }
-        private void HistoryRemoveEntity(uint id, RectangleF r, uint order) {
+        private void HistoryRemoveEntity(uint id, RectangleF r, uint order, Tile.Type type) {
             _historyHandler.Add(() => {
-                CreateEntity(id, r, order);
+                CreateEntity(id, r, order, type);
             }, () => {
                 RemoveEntity(id);
             });
@@ -144,8 +144,15 @@ namespace GameProject {
                 OrderEntity(id, newOrder);
             });
         }
-        private void CreateEntity(uint id, RectangleF r, uint order) {
-            Entity e = new Entity(id, r, order);
+        private void HistoryTypeEntity(uint id, Tile.Type oldType, Tile.Type newType) {
+            _historyHandler.Add(() => {
+                TypeEntity(id, oldType);
+            }, () => {
+                TypeEntity(id, newType);
+            });
+        }
+        private void CreateEntity(uint id, RectangleF r, uint order, Tile.Type type) {
+            Entity e = new Entity(id, r, order, type);
             _quadtree.Add(e);
             _entities.Add(e.Id, e);
             if (_shouldAddNewToHover) _newEntitiesHover.Push(e.Id);
@@ -175,6 +182,10 @@ namespace GameProject {
         private void OrderEntity(uint id, uint order) {
             Entity e = _entities[id];
             e.Order = order;
+        }
+        private void TypeEntity(uint id, Tile.Type type) {
+            Entity e = _entities[id];
+            e.Type = type;
         }
 
         private void SingleHover() {
@@ -258,95 +269,103 @@ namespace GameProject {
             _selection.Rect = null;
         }
         private void ApplyEdit(bool isDone) {
-            Sidebar.Put();
-            var rect = _edit.Rect!.Value;
-            var newRect = rect;
-            string hoveredX = $"{rect.X}";
-            string hoveredY = $"{rect.Y}";
-            string hoveredWidth = $"{rect.Width}";
-            string hoveredHeight = $"{rect.Height}";
-            Label.Put("X");
-            Textbox.Put(ref hoveredX);
-            Label.Put("Y");
-            Textbox.Put(ref hoveredY);
-            if (_selectedEntities.Count() == 1) {
-                Label.Put("Width");
-                Textbox.Put(ref hoveredWidth);
-                Label.Put("Height");
-                Textbox.Put(ref hoveredHeight);
-            }
+            // If the edit rectangle isn't null, we have at least one selection.
+            if (_edit.Rect != null) {
+                using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
+                    e.MoveNext();
+                    var first = e.Current;
 
-            if (float.TryParse(hoveredX, out float newX)) {
-                newRect.X = newX;
-            }
-            if (float.TryParse(hoveredY, out float newY)) {
-                newRect.Y = newY;
-            }
-            if (float.TryParse(hoveredWidth, out float newWidth)) {
-                if (newWidth > 0) {
-                    newRect.Width = newWidth;
-                }
-            }
-            if (float.TryParse(hoveredHeight, out float newHeight)) {
-                if (newHeight > 0) {
-                    newRect.Height = newHeight;
-                }
-            }
-
-            if (rect.X != newRect.X || rect.Y != newRect.Y || rect.Width != newRect.Width || rect.Height != newRect.Height) {
-                _edit.Rect = new RectangleF(newRect.X, newRect.Y, newRect.Width, newRect.Height);
-
-                isDone = true;
-            }
-            Sidebar.Pop();
-
-            if (_editRectStartXY != (Vector2)_edit.Rect.Value.Position || _editRectStartSize != (Vector2)_edit.Rect.Value.Size) {
-                if (!isDone) {
-                    using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
-                        e.MoveNext();
-                        var first = e.Current;
-                        var bound = first.Bounds;
-                        bound.XY = first.Offset + _edit.Rect.Value.Position;
-                        first.Bounds = bound;
-
-                        while (e.MoveNext()) {
-                            var current = e.Current;
-                            bound = current.Bounds;
-                            bound.XY = current.Offset + first.Bounds.XY;
-                            current.Bounds = bound;
-                            _quadtree.Update(current);
-                            _selectedEntities.Update(current);
-                        }
-
-                        if (_selectedEntities.Count() == 1) {
-                            bound.Size = _edit.Rect.Value.Size;
-                            first.Bounds = bound;
-                        }
-                        _quadtree.Update(first);
-                        _selectedEntities.Update(first);
+                    Sidebar.Put();
+                    var rect = _edit.Rect!.Value;
+                    var newRect = rect;
+                    string hoveredX = $"{rect.X}";
+                    string hoveredY = $"{rect.Y}";
+                    string hoveredWidth = $"{rect.Width}";
+                    string hoveredHeight = $"{rect.Height}";
+                    string type = $"{(int)first.Type}";
+                    Label.Put("X");
+                    Textbox.Put(ref hoveredX);
+                    Label.Put("Y");
+                    Textbox.Put(ref hoveredY);
+                    if (_selectedEntities.Count() == 1) {
+                        Label.Put("Width");
+                        Textbox.Put(ref hoveredWidth);
+                        Label.Put("Height");
+                        Textbox.Put(ref hoveredHeight);
+                        Label.Put("Type");
+                        Textbox.Put(ref type);
                     }
-                } else {
-                    using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
-                        _historyHandler.AutoCommit = false;
-                        e.MoveNext();
-                        var first = e.Current;
-                        Vector2 oldFirstStart = first.Offset + _editRectStartXY;
-                        Vector2 newFirstSTart = first.Offset + _edit.Rect.Value.Position;
-                        HistoryMoveEntity(first.Id, oldFirstStart, newFirstSTart);
 
-                        while (e.MoveNext()) {
-                            var current = e.Current;
-                            HistoryMoveEntity(current.Id, current.Offset + oldFirstStart, current.Offset + newFirstSTart);
+                    if (float.TryParse(hoveredX, out float newX)) {
+                        newRect.X = newX;
+                    }
+                    if (float.TryParse(hoveredY, out float newY)) {
+                        newRect.Y = newY;
+                    }
+                    if (float.TryParse(hoveredWidth, out float newWidth)) {
+                        if (newWidth > 0) {
+                            newRect.Width = newWidth;
                         }
-
-                        if (_selectedEntities.Count() == 1) {
-                            HistoryResizeEntity(first.Id, _editRectStartSize, _edit.Rect.Value.Size);
+                    }
+                    if (float.TryParse(hoveredHeight, out float newHeight)) {
+                        if (newHeight > 0) {
+                            newRect.Height = newHeight;
                         }
-                        _historyHandler.Commit();
-                        _historyHandler.AutoCommit = true;
+                    }
+                    if (int.TryParse(type, out int newType)) {
+                        if (newType >= 0) {
+                            first.Type = (Tile.Type)newType;
+                        }
+                    }
 
-                        _editRectStartXY = _edit.Rect.Value.Position;
-                        _editRectStartSize = _edit.Rect.Value.Size;
+                    if (rect.X != newRect.X || rect.Y != newRect.Y || rect.Width != newRect.Width || rect.Height != newRect.Height) {
+                        _edit.Rect = new RectangleF(newRect.X, newRect.Y, newRect.Width, newRect.Height);
+
+                        isDone = true;
+                    }
+                    Sidebar.Pop();
+
+                    if (_editRectStartXY != (Vector2)_edit.Rect.Value.Position || _editRectStartSize != (Vector2)_edit.Rect.Value.Size) {
+                        if (!isDone) {
+                            var bound = first.Bounds;
+                            bound.XY = first.Offset + _edit.Rect.Value.Position;
+                            first.Bounds = bound;
+
+                            while (e.MoveNext()) {
+                                var current = e.Current;
+                                bound = current.Bounds;
+                                bound.XY = current.Offset + first.Bounds.XY;
+                                current.Bounds = bound;
+                                _quadtree.Update(current);
+                                _selectedEntities.Update(current);
+                            }
+
+                            if (_selectedEntities.Count() == 1) {
+                                bound.Size = _edit.Rect.Value.Size;
+                                first.Bounds = bound;
+                            }
+                            _quadtree.Update(first);
+                            _selectedEntities.Update(first);
+                        } else {
+                            _historyHandler.AutoCommit = false;
+                            Vector2 oldFirstStart = first.Offset + _editRectStartXY;
+                            Vector2 newFirstSTart = first.Offset + _edit.Rect.Value.Position;
+                            HistoryMoveEntity(first.Id, oldFirstStart, newFirstSTart);
+
+                            while (e.MoveNext()) {
+                                var current = e.Current;
+                                HistoryMoveEntity(current.Id, current.Offset + oldFirstStart, current.Offset + newFirstSTart);
+                            }
+
+                            if (_selectedEntities.Count() == 1) {
+                                HistoryResizeEntity(first.Id, _editRectStartSize, _edit.Rect.Value.Size);
+                            }
+                            _historyHandler.Commit();
+                            _historyHandler.AutoCommit = true;
+
+                            _editRectStartXY = _edit.Rect.Value.Position;
+                            _editRectStartSize = _edit.Rect.Value.Size;
+                        }
                     }
                 }
             }
@@ -401,7 +420,7 @@ namespace GameProject {
             var all = _selectedEntities.ToArray();
             _historyHandler.AutoCommit = false;
             foreach (var e in all) {
-                HistoryRemoveEntity(e.Id, new RectangleF(e.Bounds.XY, e.Bounds.Size), e.Order);
+                HistoryRemoveEntity(e.Id, new RectangleF(e.Bounds.XY, e.Bounds.Size), e.Order, e.Type);
                 _selectedEntities.Remove(e);
             }
             _historyHandler.Commit();
@@ -416,13 +435,13 @@ namespace GameProject {
                     e.MoveNext();
                     var current = e.Current;
                     var pos1 = current.Bounds.XY;
-                    _pasteBuffer.Enqueue(new EntityPaste(new RectangleF(0, 0, current.Bounds.Width, current.Bounds.Height)));
+                    _pasteBuffer.Enqueue(new EntityPaste(new RectangleF(0, 0, current.Bounds.Width, current.Bounds.Height), current.Type));
 
                     while (e.MoveNext()) {
                         current = e.Current;
                         var pos2 = current.Bounds.XY;
 
-                        _pasteBuffer.Enqueue(new EntityPaste(new RectangleF(pos2 - pos1, new Vector2(current.Bounds.Width, current.Bounds.Height))));
+                        _pasteBuffer.Enqueue(new EntityPaste(new RectangleF(pos2 - pos1, new Vector2(current.Bounds.Width, current.Bounds.Height)), current.Type));
                     }
                 }
             }
@@ -433,7 +452,7 @@ namespace GameProject {
         }
         private void Create() {
             _shouldAddNewToHover = true;
-            HistoryCreateEntity(GetNextId(), new RectangleF(Camera.MouseWorld, new Vector2(100, 100)), GetNextOrder());
+            HistoryCreateEntity(GetNextId(), new RectangleF(Camera.MouseWorld, new Vector2(100, 100)), GetNextOrder(), Tile.Type.Red);
             _shouldAddNewToHover = false;
         }
         private void CreateStuff() {
@@ -446,7 +465,7 @@ namespace GameProject {
                 float minY = screenBounds.Top;
                 float maxY = screenBounds.Bottom;
 
-                HistoryCreateEntity(GetNextId(), new RectangleF(new Vector2(_random.NextSingle(minX, maxX), _random.NextSingle(minY, maxY)) - origin, new Vector2(_random.NextSingle(50, 200), _random.NextSingle(50, 200))), GetNextOrder());
+                HistoryCreateEntity(GetNextId(), new RectangleF(new Vector2(_random.NextSingle(minX, maxX), _random.NextSingle(minY, maxY)) - origin, new Vector2(_random.NextSingle(50, 200), _random.NextSingle(50, 200))), GetNextOrder(), Tile.Type.Red);
             }
             _historyHandler.Commit();
             _historyHandler.AutoCommit = true;
@@ -455,7 +474,7 @@ namespace GameProject {
             _shouldAddNewToHover = true;
             _historyHandler.AutoCommit = false;
             foreach (var e in _pasteBuffer) {
-                HistoryCreateEntity(GetNextId(), new RectangleF(anchor + e.Rect.Position, e.Rect.Size), GetNextOrder());
+                HistoryCreateEntity(GetNextId(), new RectangleF(anchor + e.Rect.Position, e.Rect.Size), GetNextOrder(), e.Type);
             }
             _historyHandler.Commit();
             _historyHandler.AutoCommit = true;
