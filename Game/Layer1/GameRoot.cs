@@ -39,7 +39,6 @@ namespace GameProject {
         }
 
         protected override void Update(GameTime gameTime) {
-            // TODO: Start creating an API over the entity quadtree dictionary, etc. For addition, removal, updates.
             GuiHelper.UpdateSetup();
 
             if (Triggers.ResetDroppedFrames.Pressed()) _fps.DroppedFrames = 0;

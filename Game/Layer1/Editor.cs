@@ -437,8 +437,6 @@ namespace GameProject {
             _shouldAddNewToHover = false;
         }
         private void CreateStuff() {
-            // TODO: Refactor random. Don't need to recreate it every time.
-            Random r = new Random();
             _historyHandler.AutoCommit = false;
             for (int i = 0; i < 10000; i++) {
                 var screenBounds = Camera.WorldBounds;
@@ -448,7 +446,7 @@ namespace GameProject {
                 float minY = screenBounds.Top;
                 float maxY = screenBounds.Bottom;
 
-                HistoryCreateEntity(GetNextId(), new RectangleF(new Vector2(r.NextSingle(minX, maxX), r.NextSingle(minY, maxY)) - origin, new Vector2(r.NextSingle(50, 200), r.NextSingle(50, 200))), GetNextOrder());
+                HistoryCreateEntity(GetNextId(), new RectangleF(new Vector2(_random.NextSingle(minX, maxX), _random.NextSingle(minY, maxY)) - origin, new Vector2(_random.NextSingle(50, 200), _random.NextSingle(50, 200))), GetNextOrder());
             }
             _historyHandler.Commit();
             _historyHandler.AutoCommit = true;
@@ -491,6 +489,7 @@ namespace GameProject {
         Quadtree<Entity> _quadtree;
         Dictionary<uint, Entity> _entities;
 
+        Random _random = new Random();
 
         IMGUI _ui = null!;
 
