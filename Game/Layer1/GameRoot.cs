@@ -68,14 +68,12 @@ namespace GameProject {
             bool ctrlModifier = Triggers.RemoveFromSelection.Held();
 
             if (Triggers.Redo.Pressed()) {
-                Utility.ClearQuadtree(_selectedEntities);
                 _historyHandler.Redo();
-                _edit.Rect = null;
+                ComputedSelectionBounds();
             }
             if (Triggers.Undo.Pressed()) {
-                Utility.ClearQuadtree(_selectedEntities);
                 _historyHandler.Undo();
-                _edit.Rect = null;
+                ComputedSelectionBounds();
             }
 
             Camera.UpdateInput();
@@ -302,37 +300,8 @@ namespace GameProject {
                 }
             }
 
-            if (_selectedEntities.Count() >= 1) {
-                using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
-                    e.MoveNext();
-                    var first = e.Current;
-                    var pos1 = first.Bounds.XY;
+            ComputedSelectionBounds();
 
-                    float x1 = first.Bounds.X;
-                    float x2 = first.Bounds.X + first.Bounds.Width;
-                    float y1 = first.Bounds.Y;
-                    float y2 = first.Bounds.Y + first.Bounds.Height;
-
-                    while (e.MoveNext()) {
-                        var current = e.Current;
-                        x1 = MathF.Min(current.Bounds.X, x1);
-                        x2 = MathF.Max(current.Bounds.X + current.Bounds.Width, x2);
-                        y1 = MathF.Min(current.Bounds.Y, y1);
-                        y2 = MathF.Max(current.Bounds.Y + current.Bounds.Height, y2);
-
-                        var pos2 = current.Bounds.XY;
-                        current.Offset = pos2 - pos1;
-                    }
-
-                    _edit.IsResizable = _selectedEntities.Count() == 1;
-                    _editRectStartXY = new Vector2(x1, y1);
-                    _editRectStartSize = new Vector2(x2 - x1, y2 - y1);
-                    _edit.Rect = new RectangleF(_editRectStartXY, _editRectStartSize);
-                    first.Offset = pos1 - _editRectStartXY;
-                }
-            } else {
-                _edit.Rect = null;
-            }
             _selection.Rect = null;
         }
         private void ApplyEdit(bool isDone) {
@@ -427,6 +396,39 @@ namespace GameProject {
                         _editRectStartSize = _edit.Rect.Value.Size;
                     }
                 }
+            }
+        }
+        private void ComputedSelectionBounds() {
+            if (_selectedEntities.Count() >= 1) {
+                using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
+                    e.MoveNext();
+                    var first = e.Current;
+                    var pos1 = first.Bounds.XY;
+
+                    float x1 = first.Bounds.X;
+                    float x2 = first.Bounds.X + first.Bounds.Width;
+                    float y1 = first.Bounds.Y;
+                    float y2 = first.Bounds.Y + first.Bounds.Height;
+
+                    while (e.MoveNext()) {
+                        var current = e.Current;
+                        x1 = MathF.Min(current.Bounds.X, x1);
+                        x2 = MathF.Max(current.Bounds.X + current.Bounds.Width, x2);
+                        y1 = MathF.Min(current.Bounds.Y, y1);
+                        y2 = MathF.Max(current.Bounds.Y + current.Bounds.Height, y2);
+
+                        var pos2 = current.Bounds.XY;
+                        current.Offset = pos2 - pos1;
+                    }
+
+                    _edit.IsResizable = _selectedEntities.Count() == 1;
+                    _editRectStartXY = new Vector2(x1, y1);
+                    _editRectStartSize = new Vector2(x2 - x1, y2 - y1);
+                    _edit.Rect = new RectangleF(_editRectStartXY, _editRectStartSize);
+                    first.Offset = pos1 - _editRectStartXY;
+                }
+            } else {
+                _edit.Rect = null;
             }
         }
 
