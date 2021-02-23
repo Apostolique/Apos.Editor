@@ -237,6 +237,9 @@ namespace GameProject {
 
                     // Now we can do the selection.
                     _hoveredEntity = hoversUnderMouse.ElementAt(Utility.Mod(hoverCount - 1 - _cycleIndex, hoverCount));
+                } else {
+                    _cycleIndex = 0;
+                    _cycleMouse = null;
                 }
             }
         }
@@ -263,6 +266,9 @@ namespace GameProject {
                     }
                 }
             }
+
+            _cycleIndex = 0;
+            _cycleMouse = null;
 
             ComputedSelectionBounds();
 
