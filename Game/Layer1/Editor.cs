@@ -313,8 +313,8 @@ namespace GameProject {
                         }
                     }
                     if (int.TryParse(type, out int newType)) {
-                        if (newType >= 0) {
-                            first.Type = (Tile.Type)newType;
+                        if (newType != (int)first.Type) {
+                            HistoryTypeEntity(first.Id, first.Type, (Tile.Type)newType);
                         }
                     }
 
