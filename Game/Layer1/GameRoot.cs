@@ -456,6 +456,7 @@ namespace GameProject {
         }
         private void Copy() {
             // TODO: Might be nice to compute the bounding rectangle. Could be useful for centering.
+            // NOTE: We already have the bounding rectangle of the selection.
             if (_selectedEntities.Count() > 0) {
                 _pasteBuffer.Clear();
                 using (IEnumerator<Entity> e = _selectedEntities.OrderBy(e => e).GetEnumerator()) {
