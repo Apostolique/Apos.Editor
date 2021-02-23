@@ -437,6 +437,8 @@ namespace GameProject {
             }
             _historyHandler.Commit();
             _historyHandler.AutoCommit = true;
+
+            _order = Math.Max(_order, _lastOrder + 1);
         }
         private void Remove() {
             _edit.Rect = null;
