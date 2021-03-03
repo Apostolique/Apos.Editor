@@ -11,6 +11,7 @@ namespace GameProject {
 
         public static Vector2 MouseWorld = Vector2.Zero;
         public static Matrix View => _camera.View();
+        public static Matrix ViewInvert => _camera.ViewInvert();
         public static Rectangle WorldBounds => _camera.WorldBounds();
         public static float Angle => _camera.Angle;
         public static Vector2 Origin => _camera.Origin;

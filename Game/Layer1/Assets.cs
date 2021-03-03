@@ -7,6 +7,7 @@ namespace GameProject {
     public static class Assets {
         public static void Setup(ContentManager content) {
             LoadTextures(content);
+            LoadShaders(content);
         }
 
         public static void LoadFonts(ContentManager content, GraphicsDevice graphicsDevice) {
@@ -15,9 +16,16 @@ namespace GameProject {
         }
         public static void LoadTextures(ContentManager content) {
             Tiles = content.Load<Texture2D>("tiles");
+            Pixel = content.Load<Texture2D>("pixel");
+        }
+        public static void LoadShaders(ContentManager content) {
+            Grid = content.Load<Effect>("grid");
+            Grid.Parameters["foreground_color"]?.SetValue(new Color(30, 30, 30).ToVector4());
         }
 
         public static FontSystem FontSystem = null!;
         public static Texture2D Tiles = null!;
+        public static Texture2D Pixel = null!;
+        public static Effect Grid = null!;
     }
 }
