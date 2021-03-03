@@ -35,14 +35,14 @@ namespace GameProject {
                 _ui.GrabFocus(null);
             }
 
-            bool shiftModifier = false;
-            bool ctrlModifier = false;
-            bool altModifier = false;
+            bool addModifier = false;
+            bool removeModifier = false;
+            bool skipEditModifier = false;
 
             if (!_edit.IsDragged) {
-                shiftModifier = Triggers.AddToSelection.Held();
-                ctrlModifier = Triggers.RemoveFromSelection.Held();
-                altModifier = Triggers.SkipEdit.Held();
+                addModifier = Triggers.AddModifier.Held();
+                removeModifier = Triggers.RemoveModifier.Held();
+                skipEditModifier = Triggers.SkipEditModifier.Held();
             }
 
             Camera.UpdateInput();
@@ -57,7 +57,7 @@ namespace GameProject {
             }
 
             bool isEditDone = false;
-            if (!shiftModifier && !ctrlModifier && !altModifier) {
+            if (!addModifier && !removeModifier && !skipEditModifier) {
                 isEditDone = _edit.UpdateInput(Camera.MouseWorld, false);
             }
             var isSelectionDone = _selection.UpdateInput(Camera.MouseWorld);
@@ -80,7 +80,7 @@ namespace GameProject {
             }
 
             if (isSelectionDone) {
-                ApplySelection(shiftModifier, ctrlModifier);
+                ApplySelection(addModifier, removeModifier);
             }
 
             if (Triggers.ResetOrder.Pressed()) {
@@ -251,11 +251,11 @@ namespace GameProject {
             }
         }
 
-        private void ApplySelection(bool shiftModifier, bool ctrlModifier) {
-            if (!shiftModifier && !ctrlModifier) {
+        private void ApplySelection(bool addModifier, bool removeModifier) {
+            if (!addModifier && !removeModifier) {
                 Utility.ClearQuadtree(_selectedEntities);
             }
-            if (ctrlModifier) {
+            if (removeModifier) {
                 foreach (var e in GetHovers()) {
                     _selectedEntities.Remove(e);
                 }

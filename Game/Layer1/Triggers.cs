@@ -47,26 +47,29 @@ namespace GameProject {
                 new Track.KeyboardCondition(Keys.Back),
                 new Track.KeyboardCondition(Keys.Delete)
             );
-        public static ICondition AddToSelection =
+        /// <summary>Adds more elements to an exising selection group.</summary>
+        public static ICondition AddModifier =
             new AnyCondition(
                 new KeyboardCondition(Keys.LeftShift),
                 new KeyboardCondition(Keys.RightShift)
             );
-        public static ICondition RemoveFromSelection =
+        /// <summary>Removes elements from an existing selection group.</summary>
+        public static ICondition RemoveModifier =
             new AnyCondition(
                 new KeyboardCondition(Keys.LeftControl),
                 new KeyboardCondition(Keys.RightControl)
             );
-        public static ICondition SkipEdit =
+        /// <summary>Skips editing to start a new selection group.</summary>
+        public static ICondition SkipEditModifier =
             new AnyCondition(
                 new KeyboardCondition(Keys.LeftAlt),
                 new KeyboardCondition(Keys.RightAlt)
             );
         public static ICondition SelectionCycle =
             new AnyCondition(
-                AddToSelection,
-                RemoveFromSelection,
-                SkipEdit
+                AddModifier,
+                RemoveModifier,
+                SkipEditModifier
             );
         public static ICondition ResetOrder =
             new KeyboardCondition(Keys.O);
