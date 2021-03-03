@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Apos.Gui;
+using FontStashSharp;
 
 namespace GameProject {
     public class GameRoot : Game {
@@ -43,7 +44,7 @@ namespace GameProject {
             GuiHelper.UpdateSetup();
 
             if (Triggers.ResetDroppedFrames.Pressed()) _fps.DroppedFrames = 0;
-            _fps.Update(gameTime.ElapsedGameTime.TotalMilliseconds);
+            _fps.Update(gameTime);
 
             _editor.Update(gameTime);
 
@@ -52,7 +53,7 @@ namespace GameProject {
         }
 
         protected override void Draw(GameTime gameTime) {
-            _fps.Draw();
+            _fps.Draw(gameTime);
 
             GraphicsDevice.Clear(new Color(0, 0, 0));
 
@@ -66,7 +67,7 @@ namespace GameProject {
             _s.Begin();
             // Draw UI
             _editor.DrawUI(_s, gameTime);
-            // _s.DrawString(font, $"fps: {_fps.FramesPerSecond} - Dropped Frames: {_fps.DroppedFrames} - Draw ms: {_fps.TimePerFrame} - Update ms: {_fps.TimePerUpdate}", new Vector2(10, 10), Color.White);
+            _s.DrawString(font, $"fps: {_fps.FramesPerSecond} - Dropped Frames: {_fps.DroppedFrames} - Draw ms: {_fps.TimePerFrame} - Update ms: {_fps.TimePerUpdate}", new Vector2(10, 10), Color.White);
             _s.End();
 
             base.Draw(gameTime);

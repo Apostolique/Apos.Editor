@@ -35,8 +35,15 @@ namespace GameProject {
                 _ui.GrabFocus(null);
             }
 
-            bool shiftModifier = Triggers.AddToSelection.Held();
-            bool ctrlModifier = Triggers.RemoveFromSelection.Held();
+            bool shiftModifier = false;
+            bool ctrlModifier = false;
+            bool altModifier = false;
+
+            if (!_edit.IsDragged) {
+                shiftModifier = Triggers.AddToSelection.Held();
+                ctrlModifier = Triggers.RemoveFromSelection.Held();
+                altModifier = Triggers.SkipEdit.Held();
+            }
 
             Camera.UpdateInput();
 
@@ -50,7 +57,7 @@ namespace GameProject {
             }
 
             bool isEditDone = false;
-            if (!shiftModifier && !ctrlModifier && !Triggers.SkipEdit.Held()) {
+            if (!shiftModifier && !ctrlModifier && !altModifier) {
                 isEditDone = _edit.UpdateInput(Camera.MouseWorld, false);
             }
             var isSelectionDone = _selection.UpdateInput(Camera.MouseWorld);

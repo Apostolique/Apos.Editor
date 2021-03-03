@@ -17,13 +17,9 @@ namespace GameProject {
                 _dragHandle = DragHandle.None;
             }
         }
-        public bool IsResizable {
-            get;
-            set;
-        } = true;
-        public float HandleDistanceWorld {
-            get => _handleDistance * Camera.ScreenToWorldScale;
-        }
+        public bool IsResizable { get; set; } = true;
+        public float HandleDistanceWorld => _handleDistance * Camera.ScreenToWorldScale;
+        public bool IsDragged => _dragHandle != DragHandle.None;
 
         public bool UpdateInput(Vector2 mouseWorld, bool canCreate = true) {
             // Use the current selection or create a new one.
@@ -93,13 +89,13 @@ namespace GameProject {
                     }
                 }
 
-                if (_dragHandle != DragHandle.None) {
+                if (IsDragged) {
                     _dragDiff = new Vector2(dx, dy);
                     Triggers.SelectionDrag.Consume();
                 }
             }
             // Drag ongoing
-            if (_dragHandle != DragHandle.None && Triggers.SelectionDrag.HeldOnly()) {
+            if (IsDragged && Triggers.SelectionDrag.HeldOnly()) {
                 // Move selection
                 if (_dragHandle.HasFlag(DragHandle.Center)) {
                     r.X = mouseWorld.X + _dragDiff.X;
@@ -155,7 +151,7 @@ namespace GameProject {
                 }
             }
 
-            if (_dragHandle != DragHandle.None && (_proxyRect != null || shouldCreate)) {
+            if (IsDragged && (_proxyRect != null || shouldCreate)) {
                 _proxyRect = r;
 
                 if (r.Width * r.Height >= Utility.ScreenArea(10)) {
@@ -169,7 +165,7 @@ namespace GameProject {
             }
 
             // Drag end
-            if (_dragHandle != DragHandle.None && Triggers.SelectionDrag.Released()) {
+            if (IsDragged && Triggers.SelectionDrag.Released()) {
                 _dragHandle = DragHandle.None;
                 return true;
             }
