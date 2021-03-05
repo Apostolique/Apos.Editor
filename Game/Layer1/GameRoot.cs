@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Apos.Gui;
@@ -70,7 +70,8 @@ namespace GameProject {
 
             GraphicsDevice.Clear(new Color(0, 0, 0));
 
-            DrawGrid(100f, new Color(30, 30, 30));
+
+            DrawGrid(_gridSize, new Color(60, 60, 60));
 
             _s.Begin(transformMatrix: Camera.View, samplerState: SamplerState.PointClamp);
             foreach (var e in _world.Quadtree.Query(Camera.WorldBounds, Camera.Angle, Camera.Origin).OrderBy(e => e))
@@ -111,10 +112,10 @@ namespace GameProject {
                 smallerGrid /= 2f;
             }
 
-            Assets.Grid.Parameters["line_size"].SetValue(new Vector2(2f * screenToWorld));
+            Assets.Grid.Parameters["line_size"].SetValue(new Vector2(1f * screenToWorld));
             Assets.Grid.Parameters["grid_size"].SetValue(new Vector2(targetGrid));
             _s.Begin(effect: Assets.Grid, samplerState: SamplerState.LinearWrap);
-            _s.Draw(Assets.Pixel, Vector2.Zero, _s.GraphicsDevice.Viewport.Bounds, color * 0.5f);
+            _s.Draw(Assets.Pixel, Vector2.Zero, _s.GraphicsDevice.Viewport.Bounds, color * 0.6f);
             _s.End();
         }
 
@@ -127,5 +128,6 @@ namespace GameProject {
         Editor _editor;
 
         Matrix _projection;
+        float _gridSize = 100f;
     }
 }
