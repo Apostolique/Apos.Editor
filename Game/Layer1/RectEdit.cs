@@ -22,17 +22,17 @@ namespace GameProject {
         public bool IsDragged => _dragHandle != DragHandle.None;
 
         public bool UpdateInput(Vector2 mouseWorld, bool canCreate = true) {
-            // Use the current selection or create a new one.
+            // Use the current rectangle or create a new one.
             RectangleF r = _proxyRect ?? new RectangleF(mouseWorld.X, mouseWorld.Y, 0, 0);
             bool shouldCreate = false;
 
-            float x1 = r.Left;
-            float x2 = r.Right;
-            float y1 = r.Top;
-            float y2 = r.Bottom;
+            float left = r.Left;
+            float right = r.Right;
+            float top = r.Top;
+            float bottom = r.Bottom;
 
             // Drag start
-            if (Triggers.SelectionDrag.Pressed(false)) {
+            if (Triggers.RectDrag.Pressed(false)) {
                 if (!_validProxy) {
                     shouldCreate = canCreate;
 
@@ -42,111 +42,109 @@ namespace GameProject {
                 float dx = 0;
                 float dy = 0;
 
-                // Move selection
+                // Move rectangle
                 if (r.Contains(mouseWorld)) {
-                    dx = x1 - mouseWorld.X;
-                    dy = y1 - mouseWorld.Y;
+                    dx = left - mouseWorld.X;
+                    dy = top - mouseWorld.Y;
                     _dragHandle = DragHandle.Center;
                 } else if (IsResizable) {
-                    // Resize selection
-                    if (y1 - HandleDistanceWorld <= mouseWorld.Y && mouseWorld.Y <= y2 + HandleDistanceWorld) {
-                        float diff1 = x1 - mouseWorld.X;
-                        float diff2 = mouseWorld.X - x2;
+                    // Resize rectangle
+                    if (top - HandleDistanceWorld <= mouseWorld.Y && mouseWorld.Y <= bottom + HandleDistanceWorld) {
+                        float dLeft = left - mouseWorld.X;
+                        float dRight = mouseWorld.X - right;
 
-                        if (0 <= diff1 && diff1 <= HandleDistanceWorld) {
+                        if (0 <= dLeft && dLeft <= HandleDistanceWorld) {
                             _dragHandle |= DragHandle.Left;
-                            dx = x1 - mouseWorld.X;
-                        } else if (0 <= diff2 && diff2 <= HandleDistanceWorld) {
+                            dx = left - mouseWorld.X;
+                        } else if (0 <= dRight && dRight <= HandleDistanceWorld) {
                             _dragHandle |= DragHandle.Right;
-                            dx = x2 - mouseWorld.X;
+                            dx = right - mouseWorld.X;
                         }
                     }
-                    // Resize selection
-                    if (x1 - HandleDistanceWorld <= mouseWorld.X && mouseWorld.X <= x2 + HandleDistanceWorld) {
-                        float diff1 = y1 - mouseWorld.Y;
-                        float diff2 = mouseWorld.Y - y2;
+                    // Resize rectangle
+                    if (left - HandleDistanceWorld <= mouseWorld.X && mouseWorld.X <= right + HandleDistanceWorld) {
+                        float dTop = top - mouseWorld.Y;
+                        float dBottom = mouseWorld.Y - bottom;
 
-                        if (0 <= diff1 && diff1 <= HandleDistanceWorld) {
+                        if (0 <= dTop && dTop <= HandleDistanceWorld) {
                             _dragHandle |= DragHandle.Top;
-                            dy = y1 - mouseWorld.Y;
-                        } else if (0 <= diff2 && diff2 <= HandleDistanceWorld) {
+                            dy = top - mouseWorld.Y;
+                        } else if (0 <= dBottom && dBottom <= HandleDistanceWorld) {
                             _dragHandle |= DragHandle.Bottom;
-                            dy = y2 - mouseWorld.Y;
+                            dy = bottom - mouseWorld.Y;
                         }
                     }
 
-                    // We're outside the selection, create a new one.
+                    // We're outside the rectangle, create a new one.
                     if (canCreate && _dragHandle == DragHandle.None) {
                         r = new RectangleF(mouseWorld.X, mouseWorld.Y, 0, 0);
-                        x1 = r.Left;
-                        x2 = r.Right;
-                        y1 = r.Top;
-                        y2 = r.Bottom;
+                        left = r.Left;
+                        right = r.Right;
+                        top = r.Top;
+                        bottom = r.Bottom;
 
                         _dragHandle = DragHandle.Left | DragHandle.Top;
-                        dx = x1 - mouseWorld.X;
-                        dy = y1 - mouseWorld.Y;
+                        dx = left - mouseWorld.X;
+                        dy = top - mouseWorld.Y;
                     }
                 }
 
                 if (IsDragged) {
-                    _dragDiff = new Vector2(dx, dy);
-                    Triggers.SelectionDrag.Consume();
+                    _dragDistance = new Vector2(dx, dy);
+                    Triggers.RectDrag.Consume();
                 }
             }
             // Drag ongoing
-            if (IsDragged && Triggers.SelectionDrag.HeldOnly()) {
-                // Move selection
+            if (IsDragged && Triggers.RectDrag.HeldOnly()) {
+                // Move rectangle
                 if (_dragHandle.HasFlag(DragHandle.Center)) {
-                    r.X = mouseWorld.X + _dragDiff.X;
-                    r.Y = mouseWorld.Y + _dragDiff.Y;
+                    r.X = mouseWorld.X + _dragDistance.X;
+                    r.Y = mouseWorld.Y + _dragDistance.Y;
                 } else if (IsResizable) {
-                    // Resize selection
+                    // Resize rectangle
                     float width = r.Width;
                     float height = r.Height;
 
                     // Do a first pass in case we're dragging a side and crossing over causing negative width or height.
                     if (_dragHandle.HasFlag(DragHandle.Left)) {
-                        float left = mouseWorld.X + _dragDiff.X;
-                        width = x2 - r.X;
+                        width = right - r.X;
                     } else if (_dragHandle.HasFlag(DragHandle.Right)) {
-                        width = mouseWorld.X + _dragDiff.X - x1;
+                        width = mouseWorld.X + _dragDistance.X - left;
                     }
                     if (_dragHandle.HasFlag(DragHandle.Top)) {
-                        float right = mouseWorld.Y + _dragDiff.Y;
-                        height = y2 - r.Y;
+                        height = bottom - r.Y;
                     } else if (_dragHandle.HasFlag(DragHandle.Bottom)) {
-                        height = mouseWorld.Y + _dragDiff.Y - y1;
+                        height = mouseWorld.Y + _dragDistance.Y - top;
                     }
 
                     // If we cross, preserve the static side.
                     if (width < 0) {
                         _dragHandle ^= DragHandle.Left | DragHandle.Right;
-                        float temp = x1;
-                        x1 = x2;
-                        x2 = temp;
+                        float temp = left;
+                        left = right;
+                        right = temp;
                     }
                     if (height < 0) {
                         _dragHandle ^= DragHandle.Top | DragHandle.Bottom;
-                        float temp = y1;
-                        y1 = y2;
-                        y2 = temp;
+                        float temp = top;
+                        top = bottom;
+                        bottom = temp;
                     }
 
                     // Compute the final rectangle.
                     if (_dragHandle.HasFlag(DragHandle.Left)) {
-                        r.X = mouseWorld.X + _dragDiff.X;
-                        r.Width = x2 - r.X;
+                        r.X = mouseWorld.X + _dragDistance.X;
+                        r.Width = right - r.X;
                     } else if (_dragHandle.HasFlag(DragHandle.Right)) {
-                        r.X = x1;
-                        r.Width = mouseWorld.X + _dragDiff.X - x1;
+                        r.X = left;
+                        r.Width = mouseWorld.X + _dragDistance.X - left;
                     }
                     if (_dragHandle.HasFlag(DragHandle.Top)) {
-                        r.Y = mouseWorld.Y + _dragDiff.Y;
-                        r.Height = y2 - r.Y;
+                        r.Y = mouseWorld.Y + _dragDistance.Y;
+                        r.Height = bottom - r.Y;
                     } else if (_dragHandle.HasFlag(DragHandle.Bottom)) {
-                        r.Y = y1;
-                        r.Height = mouseWorld.Y + _dragDiff.Y - y1;
+                        r.Y = top;
+                        r.Height = mouseWorld.Y + _dragDistance.Y - top;
                     }
                 }
             }
@@ -165,7 +163,7 @@ namespace GameProject {
             }
 
             // Drag end
-            if (IsDragged && Triggers.SelectionDrag.Released()) {
+            if (IsDragged && Triggers.RectDrag.Released()) {
                 _dragHandle = DragHandle.None;
                 return true;
             }
@@ -195,7 +193,7 @@ namespace GameProject {
         }
         DragHandle _dragHandle = DragHandle.None;
         float _handleDistance = 50f;
-        Vector2 _dragDiff = new Vector2();
+        Vector2 _dragDistance = new Vector2();
 
         RectangleF? _rect;
         RectangleF? _proxyRect;

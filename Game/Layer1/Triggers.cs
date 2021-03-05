@@ -14,7 +14,7 @@ namespace GameProject {
         public static ICondition RotateRight = new Track.KeyboardCondition(Keys.OemPeriod);
 
         public static ICondition CameraDrag = new MouseCondition(MouseButton.MiddleButton);
-        public static ICondition SelectionDrag = new Track.MouseCondition(MouseButton.LeftButton);
+        public static ICondition RectDrag = new Track.MouseCondition(MouseButton.LeftButton);
 
         public static ICondition Copy = new Track.KeyboardCondition(Keys.C);
         public static ICondition Paste = new Track.KeyboardCondition(Keys.V);
