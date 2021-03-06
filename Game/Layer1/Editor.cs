@@ -400,52 +400,55 @@ namespace GameProject {
                     }
                     Sidebar.Pop();
 
-                    if (_editRectStartXY != (Vector2)_edit.Rect.Value.Position || _editRectStartSize != (Vector2)_edit.Rect.Value.Size) {
+                    if (!isDone) {
+                        if (_editRectStartXY != (Vector2)_edit.Rect.Value.Position || _editRectStartSize != (Vector2)_edit.Rect.Value.Size) {
+                            _editRectStartXY = _edit.Rect.Value.Position;
+                            _editRectStartSize = _edit.Rect.Value.Size;
+
+                            if (!isDone) {
+                                var bound = first.Bounds;
+                                bound.XY = first.Offset + _edit.Rect.Value.Position;
+                                first.Bounds = bound;
+
+                                while (e.MoveNext()) {
+                                    var current = e.Current;
+                                    bound = current.Bounds;
+                                    bound.XY = current.Offset + first.Bounds.XY;
+                                    current.Bounds = bound;
+                                    _quadtree.Update(current);
+                                    _selectedEntities.Update(current);
+                                }
+
+                                if (_selectedEntities.Count() == 1) {
+                                    bound.Size = _edit.Rect.Value.Size;
+                                    first.Bounds = bound;
+                                }
+                                _quadtree.Update(first);
+                                _selectedEntities.Update(first);
+                            }
+                        }
+                    } else if (_editRectInitialStartXY != (Vector2)_edit.Rect.Value.Position || _editRectInitialStartSize != (Vector2)_edit.Rect.Value.Size) {
                         _editRectStartXY = _edit.Rect.Value.Position;
                         _editRectStartSize = _edit.Rect.Value.Size;
 
-                        if (!isDone ||
-                            isDone && _editRectStartXY == _editRectInitialStartXY && _editRectStartSize == _editRectInitialStartSize
-                        ) {
-                            var bound = first.Bounds;
-                            bound.XY = first.Offset + _edit.Rect.Value.Position;
-                            first.Bounds = bound;
+                        _historyHandler.AutoCommit = false;
+                        Vector2 oldFirstStart = first.Offset + _editRectInitialStartXY;
+                        Vector2 newFirstSTart = first.Offset + _edit.Rect.Value.Position;
+                        HistoryMoveEntity(first.Id, oldFirstStart, newFirstSTart);
 
-                            while (e.MoveNext()) {
-                                var current = e.Current;
-                                bound = current.Bounds;
-                                bound.XY = current.Offset + first.Bounds.XY;
-                                current.Bounds = bound;
-                                _quadtree.Update(current);
-                                _selectedEntities.Update(current);
-                            }
-
-                            if (_selectedEntities.Count() == 1) {
-                                bound.Size = _edit.Rect.Value.Size;
-                                first.Bounds = bound;
-                            }
-                            _quadtree.Update(first);
-                            _selectedEntities.Update(first);
-                        } else {
-                            _historyHandler.AutoCommit = false;
-                            Vector2 oldFirstStart = first.Offset + _editRectInitialStartXY;
-                            Vector2 newFirstSTart = first.Offset + _edit.Rect.Value.Position;
-                            HistoryMoveEntity(first.Id, oldFirstStart, newFirstSTart);
-
-                            while (e.MoveNext()) {
-                                var current = e.Current;
-                                HistoryMoveEntity(current.Id, current.Offset + oldFirstStart, current.Offset + newFirstSTart);
-                            }
-
-                            if (_selectedEntities.Count() == 1) {
-                                HistoryResizeEntity(first.Id, _editRectInitialStartSize, _edit.Rect.Value.Size);
-                            }
-                            _historyHandler.Commit();
-                            _historyHandler.AutoCommit = true;
-
-                            _editRectInitialStartXY = _edit.Rect.Value.Position;
-                            _editRectInitialStartSize = _edit.Rect.Value.Size;
+                        while (e.MoveNext()) {
+                            var current = e.Current;
+                            HistoryMoveEntity(current.Id, current.Offset + oldFirstStart, current.Offset + newFirstSTart);
                         }
+
+                        if (_selectedEntities.Count() == 1) {
+                            HistoryResizeEntity(first.Id, _editRectInitialStartSize, _edit.Rect.Value.Size);
+                        }
+                        _historyHandler.Commit();
+                        _historyHandler.AutoCommit = true;
+
+                        _editRectInitialStartXY = _edit.Rect.Value.Position;
+                        _editRectInitialStartSize = _edit.Rect.Value.Size;
                     }
                 }
             }
