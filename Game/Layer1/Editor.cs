@@ -339,7 +339,12 @@ namespace GameProject {
                     Sidebar.Pop();
 
                     if (_editRectStartXY != (Vector2)_edit.Rect.Value.Position || _editRectStartSize != (Vector2)_edit.Rect.Value.Size) {
-                        if (!isDone) {
+                        _editRectStartXY = _edit.Rect.Value.Position;
+                        _editRectStartSize = _edit.Rect.Value.Size;
+
+                        if (!isDone ||
+                            isDone && _editRectStartXY == _editRectInitialStartXY && _editRectStartSize == _editRectInitialStartSize
+                        ) {
                             var bound = first.Bounds;
                             bound.XY = first.Offset + _edit.Rect.Value.Position;
                             first.Bounds = bound;
@@ -361,7 +366,7 @@ namespace GameProject {
                             _selectedEntities.Update(first);
                         } else {
                             _historyHandler.AutoCommit = false;
-                            Vector2 oldFirstStart = first.Offset + _editRectStartXY;
+                            Vector2 oldFirstStart = first.Offset + _editRectInitialStartXY;
                             Vector2 newFirstSTart = first.Offset + _edit.Rect.Value.Position;
                             HistoryMoveEntity(first.Id, oldFirstStart, newFirstSTart);
 
@@ -371,13 +376,13 @@ namespace GameProject {
                             }
 
                             if (_selectedEntities.Count() == 1) {
-                                HistoryResizeEntity(first.Id, _editRectStartSize, _edit.Rect.Value.Size);
+                                HistoryResizeEntity(first.Id, _editRectInitialStartSize, _edit.Rect.Value.Size);
                             }
                             _historyHandler.Commit();
                             _historyHandler.AutoCommit = true;
 
-                            _editRectStartXY = _edit.Rect.Value.Position;
-                            _editRectStartSize = _edit.Rect.Value.Size;
+                            _editRectInitialStartXY = _edit.Rect.Value.Position;
+                            _editRectInitialStartSize = _edit.Rect.Value.Size;
                         }
                     }
                 }
@@ -411,6 +416,9 @@ namespace GameProject {
                     _editRectStartSize = new Vector2(x2 - x1, y2 - y1);
                     _edit.Rect = new RectangleF(_editRectStartXY, _editRectStartSize);
                     first.Offset = pos1 - _editRectStartXY;
+
+                    _editRectInitialStartXY = _editRectStartXY;
+                    _editRectInitialStartSize = _editRectStartSize;
                 }
             } else {
                 _edit.Rect = null;
@@ -532,6 +540,8 @@ namespace GameProject {
 
         RectEdit _selection = null!;
         RectEdit _edit = null!;
+        Vector2 _editRectInitialStartXY = Vector2.Zero;
+        Vector2 _editRectInitialStartSize = Vector2.Zero;
         Vector2 _editRectStartXY = Vector2.Zero;
         Vector2 _editRectStartSize = Vector2.Zero;
         bool _shouldAddNewToHover = false;
