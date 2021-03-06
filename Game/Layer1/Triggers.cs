@@ -16,6 +16,8 @@ namespace GameProject {
         public static ICondition CameraDrag = new MouseCondition(MouseButton.MiddleButton);
         public static ICondition RectDrag = new Track.MouseCondition(MouseButton.LeftButton);
 
+        public static ICondition AlignToGrid = new KeyboardCondition(Keys.LeftControl);
+
         public static ICondition Copy = new Track.KeyboardCondition(Keys.C);
         public static ICondition Paste = new Track.KeyboardCondition(Keys.V);
         public static ICondition Cut = new Track.KeyboardCondition(Keys.X);

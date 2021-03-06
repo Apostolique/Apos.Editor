@@ -73,9 +73,13 @@ namespace GameProject {
 
             bool isEditDone = false;
             if (!addModifier && !removeModifier && !skipEditModifier) {
-                isEditDone = _edit.UpdateInput(Camera.MouseWorld, false, grid: new Vector2(_gridSize));
+                if (Triggers.AlignToGrid.Held()) {
+                    isEditDone = _edit.UpdateInput(Camera.MouseWorld, false, grid: new Vector2(_gridSize));
+                } else {
+                    isEditDone = _edit.UpdateInput(Camera.MouseWorld, false);
+                }
             }
-            var isSelectionDone = _selection.UpdateInput(Camera.MouseWorld, grid: new Vector2(_gridSize));
+            var isSelectionDone = _selection.UpdateInput(Camera.MouseWorld);
 
             ApplyEdit(isEditDone);
 

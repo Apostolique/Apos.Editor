@@ -162,36 +162,54 @@ namespace GameProject {
                     float newRight = _proxyRect.Value.X + _proxyRect.Value.Width;
                     float newBottom = _proxyRect.Value.Y + _proxyRect.Value.Height;
 
-                    float snapLeft = SnapX(newLeft, grid);
-                    float snapTop = SnapY(newTop, grid);
-                    float snapRight = SnapX(newRight, grid);
-                    float snapBottom = SnapY(newBottom, grid);
-
-                    float diffLeft = snapLeft - newLeft;
-                    float diffTop = snapTop - newTop;
-                    float diffRight = snapRight - newRight;
-                    float diffBottom = snapBottom - newBottom;
-
                     float finalLeft = newLeft;
                     float finalTop = newTop;
                     float finalRight = newRight;
                     float finalBottom = newBottom;
 
-                    if (MathF.Abs(diffLeft) < MathF.Abs(diffRight)) {
-                        finalLeft = snapLeft;
-                        finalRight += diffLeft;
-                    } else {
-                        finalRight = snapRight;
-                        finalLeft += diffRight;
-                    }
-                    if (MathF.Abs(diffTop) < MathF.Abs(diffBottom)) {
-                        finalTop = snapTop;
-                        finalBottom += diffTop;
-                    } else {
-                        finalBottom = snapBottom;
-                        finalTop += diffBottom;
+                    if (grid != null) {
+                        float snapLeft = SnapX(newLeft, grid);
+                        float snapTop = SnapY(newTop, grid);
+                        float snapRight = SnapX(newRight, grid);
+                        float snapBottom = SnapY(newBottom, grid);
+
+                        float diffLeft = snapLeft - newLeft;
+                        float diffTop = snapTop - newTop;
+                        float diffRight = snapRight - newRight;
+                        float diffBottom = snapBottom - newBottom;
+
+                        bool biasLeft = _dragHandle.HasFlag(DragHandle.Left) || _dragHandle.HasFlag(DragHandle.Center) && MathF.Abs(diffLeft) < MathF.Abs(diffRight);
+                        bool biasTop = _dragHandle.HasFlag(DragHandle.Top) || _dragHandle.HasFlag(DragHandle.Center) && MathF.Abs(diffTop) < MathF.Abs(diffBottom);
+                        bool biasRight = _dragHandle.HasFlag(DragHandle.Right) || _dragHandle.HasFlag(DragHandle.Center) && MathF.Abs(diffLeft) >= MathF.Abs(diffRight);
+                        bool biasBottom = _dragHandle.HasFlag(DragHandle.Bottom) || _dragHandle.HasFlag(DragHandle.Center) && MathF.Abs(diffTop) >= MathF.Abs(diffBottom);
+
+                        if (biasLeft && !_dragHandle.HasFlag(DragHandle.Right)) {
+                            finalLeft = snapLeft;
+                            if (_dragHandle.HasFlag(DragHandle.Center)) {
+                                finalRight += diffLeft;
+                            }
+                        }
+                        if (biasRight && !_dragHandle.HasFlag(DragHandle.Left)) {
+                            finalRight = snapRight;
+                            if (_dragHandle.HasFlag(DragHandle.Center)) {
+                                finalLeft += diffRight;
+                            }
+                        }
+                        if (biasTop && !_dragHandle.HasFlag(DragHandle.Bottom)) {
+                            finalTop = snapTop;
+                            if (_dragHandle.HasFlag(DragHandle.Center)) {
+                                finalBottom += diffTop;
+                            }
+                        }
+                        if (biasBottom && !_dragHandle.HasFlag(DragHandle.Top)) {
+                            finalBottom = snapBottom;
+                            if (_dragHandle.HasFlag(DragHandle.Center)) {
+                                finalTop += diffBottom;
+                            }
+                        }
                     }
 
+                    // TODO: Fix bug where _rect size can be negative. In that case, the size should be set to 0 and act as a snap not on the grid.
                     _rect = new RectangleF(finalLeft, finalTop, finalRight - finalLeft, finalBottom - finalTop);
                 } else {
                     _rect = null;
@@ -201,6 +219,7 @@ namespace GameProject {
             // Drag end
             if (IsDragged && Triggers.RectDrag.Released()) {
                 _dragHandle = DragHandle.None;
+                _proxyRect = _rect;
                 return true;
             }
 
