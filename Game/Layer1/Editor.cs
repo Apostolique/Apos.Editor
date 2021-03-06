@@ -12,7 +12,7 @@ using MonoGame.Extended;
 
 namespace GameProject {
     public class Editor {
-        public Editor(World world) {
+        public Editor(World world, GraphicsDevice graphicsDevice) {
             _world = world;
             _quadtree = _world.Quadtree;
             _entities = _world.Entities;
@@ -24,16 +24,31 @@ namespace GameProject {
             _edit = new RectEdit();
 
             _ui = new IMGUI();
-            // If we end up with more UIs, this should be called at the beginning of the update loop.
-            GuiHelper.CurrentIMGUI = _ui;
+
+            int width = graphicsDevice.Viewport.Width;
+            int height = graphicsDevice.Viewport.Height;
+            _projection = Matrix.CreateOrthographicOffCenter(0, width, height, 0, 0, 1);
+        }
+        public void WindowResize(int width, int height) {
+            _projection = Matrix.CreateOrthographicOffCenter(0, width, height, 0, 0, 1);
         }
 
         public void Update(GameTime gameTime) {
+            GuiHelper.CurrentIMGUI = _ui;
             _ui.UpdateAll(gameTime);
 
-            if (Triggers.SelectionDrag.Pressed(false)) {
+            if (Triggers.RectDrag.Pressed(false)) {
                 _ui.GrabFocus(null);
             }
+
+            Sidebar.Put(isLeftSide: true);
+            string gridSizeString = $"{_gridSize}";
+            Label.Put("Grid Size");
+            Textbox.Put(ref gridSizeString);
+            if (float.TryParse(gridSizeString, out float newGridSize)) {
+                _gridSize = newGridSize;
+            }
+            Sidebar.Pop();
 
             bool addModifier = false;
             bool removeModifier = false;
@@ -58,9 +73,9 @@ namespace GameProject {
 
             bool isEditDone = false;
             if (!addModifier && !removeModifier && !skipEditModifier) {
-                isEditDone = _edit.UpdateInput(Camera.MouseWorld, false);
+                isEditDone = _edit.UpdateInput(Camera.MouseWorld, false, grid: new Vector2(_gridSize));
             }
-            var isSelectionDone = _selection.UpdateInput(Camera.MouseWorld);
+            var isSelectionDone = _selection.UpdateInput(Camera.MouseWorld, grid: new Vector2(_gridSize));
 
             ApplyEdit(isEditDone);
 
@@ -97,6 +112,9 @@ namespace GameProject {
                 Copy();
             }
         }
+        public void DrawBackground(SpriteBatch s) {
+            DrawGrid(s, _gridSize, new Color(60, 60, 60));
+        }
         public void Draw(SpriteBatch s) {
             _selection.Draw(s);
             _edit.Draw(s);
@@ -105,9 +123,49 @@ namespace GameProject {
                 e.DrawHighlight(s, 0f, 2f, Color.White);
             foreach (var e in GetHovers(true))
                 e.DrawHighlight(s, -2f, 3f, Color.Black);
+
+            if (_edit._proxyRect != null) {
+                s.FillRectangle(_edit._proxyRect.Value, Color.Green * 0.2f);
+                s.DrawRectangle(_edit._proxyRect.Value, Color.Green * 0.2f, Camera.ScreenToWorldScale);
+            }
+
+            if (_selection._proxyRect != null) {
+                s.FillRectangle(_selection._proxyRect.Value, Color.Blue * 0.2f);
+                s.DrawRectangle(_selection._proxyRect.Value, Color.Blue * 0.2f, Camera.ScreenToWorldScale);
+            }
         }
         public void DrawUI(SpriteBatch s, GameTime gameTime) {
             _ui.Draw(gameTime);
+        }
+
+        private void DrawGrid(SpriteBatch s, float gridSize, Color color) {
+            Assets.Grid.Parameters["view_projection"].SetValue(Matrix.Identity *  _projection);
+            Assets.Grid.Parameters["tex_transform"].SetValue(Matrix.Invert(Camera.View));
+
+            float screenToWorld = Camera.ScreenToWorldScale;
+
+            float targetGrid = gridSize;
+            float gridWorld = targetGrid * screenToWorld;
+
+            while (targetGrid < gridWorld) {
+                targetGrid *= 2f;
+            }
+
+            Assets.Grid.Parameters["line_size"].SetValue(new Vector2(1f * screenToWorld));
+            float smallerGrid = targetGrid / 2f;
+            while (smallerGrid >= 8f * screenToWorld && smallerGrid >= gridSize) {
+                Assets.Grid.Parameters["grid_size"].SetValue(new Vector2(smallerGrid));
+                s.Begin(effect: Assets.Grid, samplerState: SamplerState.LinearWrap);
+                s.Draw(Assets.Pixel, Vector2.Zero, s.GraphicsDevice.Viewport.Bounds, color * 0.2f);
+                s.End();
+                smallerGrid /= 2f;
+            }
+
+            Assets.Grid.Parameters["line_size"].SetValue(new Vector2(1f * screenToWorld));
+            Assets.Grid.Parameters["grid_size"].SetValue(new Vector2(targetGrid));
+            s.Begin(effect: Assets.Grid, samplerState: SamplerState.LinearWrap);
+            s.Draw(Assets.Pixel, Vector2.Zero, s.GraphicsDevice.Viewport.Bounds, color * 0.6f);
+            s.End();
         }
 
         private uint GetNextId() {
@@ -552,5 +610,8 @@ namespace GameProject {
         Quadtree<Entity> _selectedEntities = null!;
         Queue<EntityPaste> _pasteBuffer = new Queue<EntityPaste>();
         uint _lastOrder = 0;
+
+        float _gridSize = 100f;
+        Matrix _projection;
     }
 }

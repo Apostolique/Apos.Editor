@@ -21,7 +21,7 @@ namespace GameProject {
         public float HandleDistanceWorld => _handleDistance * Camera.ScreenToWorldScale;
         public bool IsDragged => _dragHandle != DragHandle.None;
 
-        public bool UpdateInput(Vector2 mouseWorld, bool canCreate = true) {
+        public bool UpdateInput(Vector2 mouseWorld, bool canCreate = true, Vector2? grid = null) {
             // Use the current rectangle or create a new one.
             RectangleF r = _proxyRect ?? new RectangleF(mouseWorld.X, mouseWorld.Y, 0, 0);
             bool shouldCreate = false;
@@ -156,7 +156,43 @@ namespace GameProject {
                     _validProxy = true;
                 }
                 if (_validProxy) {
-                    _rect = _proxyRect;
+                    // TODO: Add a bias when resizing. We shouldn't snap to both sides.
+                    float newLeft = _proxyRect.Value.X;
+                    float newTop = _proxyRect.Value.Y;
+                    float newRight = _proxyRect.Value.X + _proxyRect.Value.Width;
+                    float newBottom = _proxyRect.Value.Y + _proxyRect.Value.Height;
+
+                    float snapLeft = SnapX(newLeft, grid);
+                    float snapTop = SnapY(newTop, grid);
+                    float snapRight = SnapX(newRight, grid);
+                    float snapBottom = SnapY(newBottom, grid);
+
+                    float diffLeft = snapLeft - newLeft;
+                    float diffTop = snapTop - newTop;
+                    float diffRight = snapRight - newRight;
+                    float diffBottom = snapBottom - newBottom;
+
+                    float finalLeft = newLeft;
+                    float finalTop = newTop;
+                    float finalRight = newRight;
+                    float finalBottom = newBottom;
+
+                    if (MathF.Abs(diffLeft) < MathF.Abs(diffRight)) {
+                        finalLeft = snapLeft;
+                        finalRight += diffLeft;
+                    } else {
+                        finalRight = snapRight;
+                        finalLeft += diffRight;
+                    }
+                    if (MathF.Abs(diffTop) < MathF.Abs(diffBottom)) {
+                        finalTop = snapTop;
+                        finalBottom += diffTop;
+                    } else {
+                        finalBottom = snapBottom;
+                        finalTop += diffBottom;
+                    }
+
+                    _rect = new RectangleF(finalLeft, finalTop, finalRight - finalLeft, finalBottom - finalTop);
                 } else {
                     _rect = null;
                 }
@@ -182,6 +218,15 @@ namespace GameProject {
             }
         }
 
+        private float SnapX(float value, Vector2? grid) {
+            if (grid != null) return MathF.Floor(value / grid.Value.X + 0.5f) * grid.Value.X;
+            return value;
+        }
+        private float SnapY(float value, Vector2? grid) {
+            if (grid != null) return MathF.Floor(value / grid.Value.Y + 0.5f) * grid.Value.Y;
+            return value;
+        }
+
         [Flags]
         enum DragHandle {
             None = 0,
@@ -196,7 +241,7 @@ namespace GameProject {
         Vector2 _dragDistance = new Vector2();
 
         RectangleF? _rect;
-        RectangleF? _proxyRect;
+        public RectangleF? _proxyRect;
         bool _validProxy = false;
     }
 }

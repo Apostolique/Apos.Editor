@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Apos.Gui;
@@ -37,20 +37,17 @@ namespace GameProject {
             Assets.LoadFonts(Content, GraphicsDevice);
             Assets.Setup(Content);
 
-            int width = GraphicsDevice.Viewport.Width;
-            int height = GraphicsDevice.Viewport.Height;
-            _projection = Matrix.CreateOrthographicOffCenter(0, width, height, 0, 0, 1);
-
             GuiHelper.Setup(this, Assets.FontSystem);
 
             _world = new World();
-            _editor = new Editor(_world);
+            _editor = new Editor(_world, GraphicsDevice);
         }
 
         private void WindowSizeChanged(object? sender, EventArgs e) {
             int width = GraphicsDevice.Viewport.Width;
             int height = GraphicsDevice.Viewport.Height;
-            _projection = Matrix.CreateOrthographicOffCenter(0, width, height, 0, 0, 1);
+
+            _editor.WindowResize(width, height);
         }
 
         protected override void Update(GameTime gameTime) {
@@ -70,8 +67,7 @@ namespace GameProject {
 
             GraphicsDevice.Clear(new Color(0, 0, 0));
 
-
-            DrawGrid(_gridSize, new Color(60, 60, 60));
+            _editor.DrawBackground(_s);
 
             _s.Begin(transformMatrix: Camera.View, samplerState: SamplerState.PointClamp);
             foreach (var e in _world.Quadtree.Query(Camera.WorldBounds, Camera.Angle, Camera.Origin).OrderBy(e => e))
@@ -89,36 +85,6 @@ namespace GameProject {
             base.Draw(gameTime);
         }
 
-        private void DrawGrid(float gridSize, Color color) {
-            Assets.Grid.Parameters["view_projection"].SetValue(Matrix.Identity *  _projection);
-            Assets.Grid.Parameters["tex_transform"].SetValue(Matrix.Invert(Camera.View));
-
-            float screenToWorld = Camera.ScreenToWorldScale;
-
-            float targetGrid = gridSize;
-            float gridWorld = targetGrid * screenToWorld;
-
-            while (targetGrid < gridWorld) {
-                targetGrid *= 2f;
-            }
-
-            Assets.Grid.Parameters["line_size"].SetValue(new Vector2(1f * screenToWorld));
-            float smallerGrid = targetGrid / 2f;
-            while (smallerGrid >= 8f * screenToWorld && smallerGrid >= gridSize) {
-                Assets.Grid.Parameters["grid_size"].SetValue(new Vector2(smallerGrid));
-                _s.Begin(effect: Assets.Grid, samplerState: SamplerState.LinearWrap);
-                _s.Draw(Assets.Pixel, Vector2.Zero, _s.GraphicsDevice.Viewport.Bounds, color * 0.2f);
-                _s.End();
-                smallerGrid /= 2f;
-            }
-
-            Assets.Grid.Parameters["line_size"].SetValue(new Vector2(1f * screenToWorld));
-            Assets.Grid.Parameters["grid_size"].SetValue(new Vector2(targetGrid));
-            _s.Begin(effect: Assets.Grid, samplerState: SamplerState.LinearWrap);
-            _s.Draw(Assets.Pixel, Vector2.Zero, _s.GraphicsDevice.Viewport.Bounds, color * 0.6f);
-            _s.End();
-        }
-
         GraphicsDeviceManager _graphics = null!;
         SpriteBatch _s = null!;
 
@@ -126,8 +92,5 @@ namespace GameProject {
 
         World _world;
         Editor _editor;
-
-        Matrix _projection;
-        float _gridSize = 100f;
     }
 }

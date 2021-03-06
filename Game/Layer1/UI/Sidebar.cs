@@ -7,6 +7,8 @@ namespace GameProject.UI {
     public class Sidebar : Panel {
         public Sidebar(string name) : base(name) { }
 
+        public bool IsLeftSide { get; set; }
+
         public override void UpdatePrefSize(GameTime gameTime) {
             base.UpdatePrefSize(gameTime);
 
@@ -16,7 +18,11 @@ namespace GameProject.UI {
 
         public override void UpdateSetup(GameTime gameTime) {
             // Sidebar is a root component so it can set it's own position.
-            X = (InputHelper.WindowWidth - 200) / GuiHelper.Scale;
+            if (IsLeftSide) {
+                X = 0;
+            } else {
+                X = (InputHelper.WindowWidth - 200) / GuiHelper.Scale;
+            }
             Y = 0;
 
             float currentY = 0;
@@ -64,7 +70,7 @@ namespace GameProject.UI {
                 }
             }
         }
-        public static new Sidebar Put(int id = 0) {
+        public static new Sidebar Put(int id = 0, bool isLeftSide = false) {
             // 1. Check if panel with id already exists.
             //      a. If already exists. Get it.
             //      b  If not, create it.
@@ -82,6 +88,7 @@ namespace GameProject.UI {
                 a = new Sidebar(fullName);
                 GuiHelper.CurrentIMGUI.Add(fullName, a);
             }
+            a.IsLeftSide = isLeftSide;
 
             if (a.LastPing != InputHelper.CurrentFrame) {
                 a.Reset();
