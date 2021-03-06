@@ -127,16 +127,6 @@ namespace GameProject {
                 e.DrawHighlight(s, 0f, 2f, Color.White);
             foreach (var e in GetHovers(true))
                 e.DrawHighlight(s, -2f, 3f, Color.Black);
-
-            if (_edit._proxyRect != null) {
-                s.FillRectangle(_edit._proxyRect.Value, Color.Green * 0.2f);
-                s.DrawRectangle(_edit._proxyRect.Value, Color.Green * 0.2f, Camera.ScreenToWorldScale);
-            }
-
-            if (_selection._proxyRect != null) {
-                s.FillRectangle(_selection._proxyRect.Value, Color.Blue * 0.2f);
-                s.DrawRectangle(_selection._proxyRect.Value, Color.Blue * 0.2f, Camera.ScreenToWorldScale);
-            }
         }
         public void DrawUI(SpriteBatch s, GameTime gameTime) {
             _ui.Draw(gameTime);
