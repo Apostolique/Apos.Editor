@@ -565,7 +565,9 @@ namespace GameProject {
         }
 
         private IEnumerable<Entity> GetHovers(bool withinCamera = false) {
-            if (_newEntitiesHover.Count > 0) {
+            if (_edit.IsDragged) {
+                yield break;
+            } else if (_newEntitiesHover.Count > 0) {
                 while (_newEntitiesHover.Count > 0) {
                     yield return _entities[_newEntitiesHover.Pop()];
                 }
