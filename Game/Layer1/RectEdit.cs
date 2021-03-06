@@ -209,7 +209,17 @@ namespace GameProject {
                         }
                     }
 
-                    // TODO: Fix bug where _rect size can be negative. In that case, the size should be set to 0 and act as a snap not on the grid.
+                    if (finalLeft > finalRight) {
+                        float temp = finalLeft;
+                        finalLeft = finalRight;
+                        finalRight = temp;
+                    }
+                    if (finalTop > finalBottom) {
+                        float temp = finalTop;
+                        finalTop = finalBottom;
+                        finalBottom = temp;
+                    }
+
                     _rect = new RectangleF(finalLeft, finalTop, finalRight - finalLeft, finalBottom - finalTop);
                 } else {
                     _rect = null;
