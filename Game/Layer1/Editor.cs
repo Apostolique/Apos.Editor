@@ -58,7 +58,7 @@ namespace GameProject {
                 if (float.TryParse(gridSizeString, out float newGridSize)) {
                     _gridSize = newGridSize;
                     _gridWorld = _gridSize * Camera.ScreenToWorldScale;
-                    _adaptiveGrid = MathF.Max(_gridSize *  GetAdaptiveGrid(_gridSize, _gridWorld), _gridSize);
+                    _adaptiveGrid = MathF.Max(GetAdaptiveGrid(_gridSize, _gridWorld), _gridSize);
                 }
             }
             Label.Put("Adaptive Size");
@@ -171,7 +171,7 @@ namespace GameProject {
         }
 
         private float GetAdaptiveGrid(float gridSize, float gridWorld) {
-            return MathF.Pow(2, MathF.Ceiling(MathF.Log2(gridWorld / gridSize)));
+            return gridSize * MathF.Pow(2, MathF.Ceiling(MathF.Log2(gridWorld / gridSize)));
         }
 
         private uint GetNextId() {
