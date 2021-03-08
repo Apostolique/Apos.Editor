@@ -43,11 +43,16 @@ namespace GameProject {
 
             Sidebar.Put(isLeftSide: true);
             string gridSizeString = $"{_gridSize}";
+            Label.Put("");
             Label.Put("Grid Size");
             Textbox.Put(ref gridSizeString);
             if (float.TryParse(gridSizeString, out float newGridSize)) {
                 _gridSize = newGridSize;
+                _gridWorld = _gridSize * Camera.ScreenToWorldScale;
+                _adaptiveGrid = MathF.Max(_gridSize *  GetAdaptiveGrid(_gridSize, _gridWorld), _gridSize);
             }
+            Label.Put("Adaptive Size");
+            Label.Put($"{_adaptiveGrid}");
             Sidebar.Pop();
 
             bool addModifier = false;
@@ -74,7 +79,7 @@ namespace GameProject {
             bool isEditDone = false;
             if (!addModifier && !removeModifier && !skipEditModifier) {
                 if (Triggers.AlignToGrid.Held()) {
-                    isEditDone = _edit.UpdateInput(Camera.MouseWorld, false, grid: new Vector2(_gridSize));
+                    isEditDone = _edit.UpdateInput(Camera.MouseWorld, false, grid: new Vector2(_adaptiveGrid));
                 } else {
                     isEditDone = _edit.UpdateInput(Camera.MouseWorld, false);
                 }
@@ -117,7 +122,7 @@ namespace GameProject {
             }
         }
         public void DrawBackground(SpriteBatch s) {
-            DrawGrid(s, _gridSize, new Color(60, 60, 60));
+            DrawGrid(s, _adaptiveGrid, _gridSize, new Color(60, 60, 60));
         }
         public void Draw(SpriteBatch s) {
             _selection.Draw(s);
@@ -132,22 +137,15 @@ namespace GameProject {
             _ui.Draw(gameTime);
         }
 
-        private void DrawGrid(SpriteBatch s, float gridSize, Color color) {
+        private void DrawGrid(SpriteBatch s, float gridSize, float minGrid, Color color) {
             Assets.Grid.Parameters["view_projection"].SetValue(Matrix.Identity *  _projection);
             Assets.Grid.Parameters["tex_transform"].SetValue(Matrix.Invert(Camera.View));
 
             float screenToWorld = Camera.ScreenToWorldScale;
 
-            float targetGrid = gridSize;
-            float gridWorld = targetGrid * screenToWorld;
-
-            while (targetGrid < gridWorld) {
-                targetGrid *= 2f;
-            }
-
             Assets.Grid.Parameters["line_size"].SetValue(new Vector2(1f * screenToWorld));
-            float smallerGrid = targetGrid / 2f;
-            while (smallerGrid >= 8f * screenToWorld && smallerGrid >= gridSize) {
+            float smallerGrid = gridSize / 2f;
+            while (smallerGrid >= 8f * screenToWorld && smallerGrid >= minGrid) {
                 Assets.Grid.Parameters["grid_size"].SetValue(new Vector2(smallerGrid));
                 s.Begin(effect: Assets.Grid, samplerState: SamplerState.LinearWrap);
                 s.Draw(Assets.Pixel, Vector2.Zero, s.GraphicsDevice.Viewport.Bounds, color * 0.2f);
@@ -156,10 +154,14 @@ namespace GameProject {
             }
 
             Assets.Grid.Parameters["line_size"].SetValue(new Vector2(1f * screenToWorld));
-            Assets.Grid.Parameters["grid_size"].SetValue(new Vector2(targetGrid));
+            Assets.Grid.Parameters["grid_size"].SetValue(new Vector2(gridSize));
             s.Begin(effect: Assets.Grid, samplerState: SamplerState.LinearWrap);
-            s.Draw(Assets.Pixel, Vector2.Zero, s.GraphicsDevice.Viewport.Bounds, color * 0.6f);
+            s.Draw(Assets.Pixel, Vector2.Zero, s.GraphicsDevice.Viewport.Bounds, color);
             s.End();
+        }
+
+        private float GetAdaptiveGrid(float gridSize, float gridWorld) {
+            return MathF.Pow(2, MathF.Ceiling(MathF.Log2(gridWorld / gridSize)));
         }
 
         private uint GetNextId() {
@@ -611,6 +613,8 @@ namespace GameProject {
         uint _lastOrder = 0;
 
         float _gridSize = 100f;
+        float _adaptiveGrid = 100f;
+        float _gridWorld = 100f;
         Matrix _projection;
     }
 }
