@@ -43,13 +43,23 @@ namespace GameProject {
 
             Sidebar.Put(isLeftSide: true);
             string gridSizeString = $"{_gridSize}";
+            string gridLockString = $"{(_gridLock ? 1 : 0)}";
             Label.Put("");
+            Label.Put("Lock Grid");
+            Textbox.Put(ref gridLockString);
+            if (Int32.TryParse(gridLockString, out int newGridLock)) {
+                _gridLock = newGridLock == 0 ? false : true;
+            }
             Label.Put("Grid Size");
-            Textbox.Put(ref gridSizeString);
-            if (float.TryParse(gridSizeString, out float newGridSize)) {
-                _gridSize = newGridSize;
-                _gridWorld = _gridSize * Camera.ScreenToWorldScale;
-                _adaptiveGrid = MathF.Max(_gridSize *  GetAdaptiveGrid(_gridSize, _gridWorld), _gridSize);
+            if (_gridLock) {
+                Label.Put(gridSizeString);
+            } else {
+                Textbox.Put(ref gridSizeString);
+                if (float.TryParse(gridSizeString, out float newGridSize)) {
+                    _gridSize = newGridSize;
+                    _gridWorld = _gridSize * Camera.ScreenToWorldScale;
+                    _adaptiveGrid = MathF.Max(_gridSize *  GetAdaptiveGrid(_gridSize, _gridWorld), _gridSize);
+                }
             }
             Label.Put("Adaptive Size");
             Label.Put($"{_adaptiveGrid}");
@@ -612,6 +622,7 @@ namespace GameProject {
         Queue<EntityPaste> _pasteBuffer = new Queue<EntityPaste>();
         uint _lastOrder = 0;
 
+        bool _gridLock = false;
         float _gridSize = 100f;
         float _adaptiveGrid = 100f;
         float _gridWorld = 100f;
