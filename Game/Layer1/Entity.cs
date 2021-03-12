@@ -7,7 +7,7 @@ using MonoGame.Extended.TextureAtlases;
 
 namespace GameProject {
     public class Entity : IBounds, IComparable<Entity> {
-        public Entity(uint id, RectangleF r, uint order, Tile.Type type) {
+        public Entity(uint id, RectangleF r, uint order, int type) {
             Id = id;
             Bounds = new RotRect(r.X, r.Y, r.Width, r.Height);
             Order = order;
@@ -26,13 +26,7 @@ namespace GameProject {
             get;
             set;
         }
-        public Tile.Type Type {
-            get => _type;
-            set {
-                _type = value;
-                _tile = new Tile(_type);
-            }
-        }
+        public int Type { get; set; }
 
         // Not really part of the object. Useful for the editor.
         public Vector2 Offset {
@@ -45,7 +39,8 @@ namespace GameProject {
         }
 
         public void Draw(SpriteBatch s) {
-            s.Draw(_tile.Texture, new Rectangle((int)Bounds.X, (int)Bounds.Y, (int)Bounds.Width, (int)Bounds.Height), Color.White);
+            var bleeder = Assets.Bleeders[Type];
+            s.Draw(bleeder.Texture, new Rectangle((int)Bounds.X, (int)Bounds.Y, (int)Bounds.Width, (int)Bounds.Height), bleeder.Source, Color.White);
         }
         public void DrawHighlight(SpriteBatch s, float distance, float thickness, Color c) {
             s.DrawRectangle(Utility.ExpandRect(new RectangleF(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height), distance * Camera.ScreenToWorldScale), c, thickness * Camera.ScreenToWorldScale);
@@ -62,17 +57,14 @@ namespace GameProject {
         public override bool Equals(object? obj) {
             return obj is Entity && Id == ((Entity)obj).Id;
         }
-
-        Tile.Type _type;
-        Tile _tile;
     }
     public class EntityPaste {
-        public EntityPaste(RectangleF rect, Tile.Type type) {
+        public EntityPaste(RectangleF rect, int type) {
             Rect = rect;
             Type = type;
         }
 
         public RectangleF Rect { get; set; }
-        public Tile.Type Type { get; set; }
+        public int Type { get; set; }
     }
 }

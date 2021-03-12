@@ -18,6 +18,19 @@ namespace GameProject {
                 json = JsonSerializer.Deserialize<T>(File.ReadAllText(jsonPath));
             } else {
                 json = new T();
+            }
+
+            return json;
+        }
+        public static T EnsureJson<T>(string name) where T : new() {
+            T json;
+
+            string jsonPath = Utility.GetPath(name);
+
+            if (File.Exists(jsonPath)) {
+                json = JsonSerializer.Deserialize<T>(File.ReadAllText(jsonPath));
+            } else {
+                json = new T();
                 var options = new JsonSerializerOptions {
                     WriteIndented = true
                 };

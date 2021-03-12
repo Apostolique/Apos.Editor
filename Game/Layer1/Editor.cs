@@ -180,14 +180,14 @@ namespace GameProject {
         private uint GetNextOrder() {
             return _order++;
         }
-        private void HistoryCreateEntity(uint id, RectangleF r, uint order, Tile.Type type) {
+        private void HistoryCreateEntity(uint id, RectangleF r, uint order, int type) {
             _historyHandler.Add(() => {
                 RemoveEntity(id);
             }, () => {
                 CreateEntity(id, r, order, type);
             });
         }
-        private void HistoryRemoveEntity(uint id, RectangleF r, uint order, Tile.Type type) {
+        private void HistoryRemoveEntity(uint id, RectangleF r, uint order, int type) {
             _historyHandler.Add(() => {
                 CreateEntity(id, r, order, type);
             }, () => {
@@ -215,14 +215,14 @@ namespace GameProject {
                 OrderEntity(id, newOrder);
             });
         }
-        private void HistoryTypeEntity(uint id, Tile.Type oldType, Tile.Type newType) {
+        private void HistoryTypeEntity(uint id, int oldType, int newType) {
             _historyHandler.Add(() => {
                 TypeEntity(id, oldType);
             }, () => {
                 TypeEntity(id, newType);
             });
         }
-        private void CreateEntity(uint id, RectangleF r, uint order, Tile.Type type) {
+        private void CreateEntity(uint id, RectangleF r, uint order, int type) {
             Entity e = new Entity(id, r, order, type);
             _quadtree.Add(e);
             _entities.Add(e.Id, e);
@@ -254,7 +254,7 @@ namespace GameProject {
             Entity e = _entities[id];
             e.Order = order;
         }
-        private void TypeEntity(uint id, Tile.Type type) {
+        private void TypeEntity(uint id, int type) {
             Entity e = _entities[id];
             e.Type = type;
         }
@@ -390,8 +390,8 @@ namespace GameProject {
                         }
                     }
                     if (int.TryParse(type, out int newType)) {
-                        if (newType != (int)first.Type) {
-                            HistoryTypeEntity(first.Id, first.Type, (Tile.Type)newType);
+                        if (newType != first.Type) {
+                            HistoryTypeEntity(first.Id, first.Type, newType);
                         }
                     }
 
@@ -540,7 +540,8 @@ namespace GameProject {
         }
         private void Create() {
             _shouldAddNewToHover = true;
-            HistoryCreateEntity(GetNextId(), new RectangleF(Camera.MouseWorld, new Vector2(100, 100)), GetNextOrder(), Tile.Type.Red);
+            // FIXME: This can crash if there are no "bleeders".
+            HistoryCreateEntity(GetNextId(), new RectangleF(Camera.MouseWorld, Assets.Bleeders[0].Source.Size), GetNextOrder(), 0);
             _shouldAddNewToHover = false;
         }
         private void CreateStuff() {
@@ -553,7 +554,8 @@ namespace GameProject {
                 float minY = screenBounds.Top;
                 float maxY = screenBounds.Bottom;
 
-                HistoryCreateEntity(GetNextId(), new RectangleF(new Vector2(_random.NextSingle(minX, maxX), _random.NextSingle(minY, maxY)) - origin, new Vector2(_random.NextSingle(50, 200), _random.NextSingle(50, 200))), GetNextOrder(), Tile.Type.Red);
+                // FIXME: This can crash if there are no "bleeders".
+                HistoryCreateEntity(GetNextId(), new RectangleF(new Vector2(_random.NextSingle(minX, maxX), _random.NextSingle(minY, maxY)) - origin, new Vector2(_random.NextSingle(50, 200), _random.NextSingle(50, 200))), GetNextOrder(), 0);
             }
             _historyHandler.Commit();
             _historyHandler.AutoCommit = true;

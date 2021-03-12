@@ -24,7 +24,7 @@ namespace GameProject {
             _s = new SpriteBatch(GraphicsDevice);
 
             // TODO: Preserve settings.
-            Settings settings = Utility.LoadJson<Settings>("Settings.json");
+            Settings settings = Utility.EnsureJson<Settings>("Settings.json");
 
             _graphics.PreferredBackBufferWidth = settings.Width;
             _graphics.PreferredBackBufferHeight = settings.Height;
@@ -69,7 +69,7 @@ namespace GameProject {
 
             _editor.DrawBackground(_s);
 
-            _s.Begin(transformMatrix: Camera.View, samplerState: SamplerState.PointClamp);
+            _s.Begin(transformMatrix: Camera.View, samplerState: SamplerState.LinearClamp);
             foreach (var e in _world.Quadtree.Query(Camera.WorldBounds, Camera.Angle, Camera.Origin).OrderBy(e => e))
                 e.Draw(_s);
             _editor.Draw(_s);

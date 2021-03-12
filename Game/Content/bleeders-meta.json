@@ -1,0 +1,16 @@
+[
+    {
+        "texture_name": "bleeders",
+        "x": 6,
+        "y": 2,
+        "width": 75,
+        "height": 75
+    },
+    {
+        "texture_name": "bleeders",
+        "x": 93,
+        "y": 14,
+        "width": 87,
+        "height": 86
+    }
+]
