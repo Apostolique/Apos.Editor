@@ -47,9 +47,7 @@
 /build:pixel.png
 
 #begin source-code-pro-medium.ttf
-/importer:
-/processor:
-/build:source-code-pro-medium.ttf
+/copy:source-code-pro-medium.ttf
 
 #begin Tiles.png
 /importer:TextureImporter

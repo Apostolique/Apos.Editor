@@ -1,16 +1,41 @@
 [
     {
         "texture_name": "bleeders",
-        "x": 6,
-        "y": 2,
-        "width": 75,
-        "height": 75
+        "source": {
+            "x": 6,
+            "y": 2,
+            "width": 75,
+            "height": 75
+        },
+        "inset": {
+            "x": 27,
+            "y": 22,
+            "width": 50,
+            "height": 50
+        }
     },
     {
         "texture_name": "bleeders",
-        "x": 93,
-        "y": 14,
-        "width": 87,
-        "height": 86
+        "source": {
+            "x": 93,
+            "y": 14,
+            "width": 87,
+            "height": 86
+        },
+        "inset": {
+            "x": 108,
+            "y": 30,
+            "width": 42,
+            "height": 44
+        }
+    },
+    {
+        "texture_name": "bleeders",
+        "source": {
+            "x": 10,
+            "y": 93,
+            "width": 48,
+            "height": 81
+        }
     }
 ]

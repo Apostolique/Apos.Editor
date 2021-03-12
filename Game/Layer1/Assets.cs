@@ -4,6 +4,7 @@ using FontStashSharp;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using MonoGame.Extended;
 
 namespace GameProject {
     public static class Assets {
@@ -33,12 +34,25 @@ namespace GameProject {
         }
         public static void LoadAtlas(ContentManager content) {
             int index = 0;
-            var meta = Utility.LoadJson<List<Bleeder>>(Path.Combine(content.RootDirectory, "bleeders-meta.json"));
+            var meta = Utility.LoadJson<List<JsonBleeder>>(Path.Combine(content.RootDirectory, "bleeders-meta.json"));
             foreach (var e in meta) {
-                e.Source = new Rectangle(e.x, e.y, e.width, e.height);
-                e.Texture = content.Load<Texture2D>(e.texture_name);
+                var b = new Bleeder {
+                    Texture = content.Load<Texture2D>(e.texture_name),
+                    Source = new Rectangle(e.source.x, e.source.y, e.source.width, e.source.height)
+                };
 
-                Bleeders.Add(index++, e);
+                if (e.inset != null) {
+                    b.Inset = new RectangleF(
+                        (e.inset.x - e.source.x) / (float)e.source.width,
+                        (e.inset.y - e.source.y) / (float)e.source.height,
+                        e.inset.width / (float)e.source.width,
+                        e.inset.height / (float)e.source.height
+                    );
+                } else {
+                    b.Inset = new RectangleF(0, 0, 1, 1);
+                }
+
+                Bleeders.Add(index++, b);
             }
         }
     }

@@ -3,7 +3,6 @@ using Dcrew.Spatial;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
-using MonoGame.Extended.TextureAtlases;
 
 namespace GameProject {
     public class Entity : IBounds, IComparable<Entity> {
@@ -19,9 +18,21 @@ namespace GameProject {
             set;
         }
         public RotRect Bounds {
-            get;
-            set;
+            get => _bounds;
+            set {
+                _bounds = value;
+
+                var bleeder = Assets.Bleeders[Type];
+                float width = Bounds.Width * bleeder.Inset.Width;
+                float height = Bounds.Height * bleeder.Inset.Height;
+
+                float x = Bounds.X + bleeder.Inset.X * Bounds.Width;
+                float y = Bounds.Y + bleeder.Inset.Y * Bounds.Height;
+
+                _inset = new RectangleF(x, y, width, height);
+            }
         }
+        public RectangleF Inset => _inset;
         public uint Order {
             get;
             set;
@@ -44,6 +55,8 @@ namespace GameProject {
         }
         public void DrawHighlight(SpriteBatch s, float distance, float thickness, Color c) {
             s.DrawRectangle(Utility.ExpandRect(new RectangleF(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height), distance * Camera.ScreenToWorldScale), c, thickness * Camera.ScreenToWorldScale);
+
+            s.DrawRectangle(Utility.ExpandRect(_inset, distance * Camera.ScreenToWorldScale), c, thickness * Camera.ScreenToWorldScale);
         }
 
         public int CompareTo(Entity? value) {
@@ -57,6 +70,9 @@ namespace GameProject {
         public override bool Equals(object? obj) {
             return obj is Entity && Id == ((Entity)obj).Id;
         }
+
+        RotRect _bounds;
+        RectangleF _inset;
     }
     public class EntityPaste {
         public EntityPaste(RectangleF rect, int type) {
