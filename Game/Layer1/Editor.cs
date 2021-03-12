@@ -236,17 +236,17 @@ namespace GameProject {
         }
         private void MoveEntity(uint id, Vector2 xy) {
             Entity e = _entities[id];
-            var bound = e.Bounds;
-            bound.XY = xy;
-            e.Bounds = bound;
+            var inset = e.Inset;
+            inset.XY = xy;
+            e.Inset = inset;
             _quadtree.Update(e);
             _selectedEntities.Update(e);
         }
         private void ResizeEntity(uint id, Vector2 size) {
             Entity e = _entities[id];
-            var bound = e.Bounds;
-            bound.Size = size;
-            e.Bounds = bound;
+            var inset = e.Inset;
+            inset.Size = size;
+            e.Inset = inset;
             _quadtree.Update(e);
             _selectedEntities.Update(e);
         }
@@ -408,22 +408,22 @@ namespace GameProject {
                             _editRectStartSize = _edit.Rect.Value.Size;
 
                             if (!isDone) {
-                                var bound = first.Bounds;
-                                bound.XY = first.Offset + _edit.Rect.Value.Position;
-                                first.Bounds = bound;
+                                var inset = first.Inset;
+                                inset.XY = first.Offset + _edit.Rect.Value.Position;
+                                first.Inset = inset;
 
                                 while (e.MoveNext()) {
                                     var current = e.Current;
-                                    bound = current.Bounds;
-                                    bound.XY = current.Offset + first.Bounds.XY;
-                                    current.Bounds = bound;
+                                    inset = current.Inset;
+                                    inset.XY = current.Offset + first.Inset.XY;
+                                    current.Inset = inset;
                                     _quadtree.Update(current);
                                     _selectedEntities.Update(current);
                                 }
 
                                 if (_selectedEntities.Count() == 1) {
-                                    bound.Size = _edit.Rect.Value.Size;
-                                    first.Bounds = bound;
+                                    inset.Size = _edit.Rect.Value.Size;
+                                    first.Inset = inset;
                                 }
                                 _quadtree.Update(first);
                                 _selectedEntities.Update(first);
@@ -460,21 +460,21 @@ namespace GameProject {
                 using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
                     e.MoveNext();
                     var first = e.Current;
-                    var pos1 = first.Bounds.XY;
+                    var pos1 = first.Inset.XY;
 
-                    float x1 = first.Bounds.X;
-                    float x2 = first.Bounds.X + first.Bounds.Width;
-                    float y1 = first.Bounds.Y;
-                    float y2 = first.Bounds.Y + first.Bounds.Height;
+                    float x1 = first.Inset.X;
+                    float x2 = first.Inset.X + first.Inset.Width;
+                    float y1 = first.Inset.Y;
+                    float y2 = first.Inset.Y + first.Inset.Height;
 
                     while (e.MoveNext()) {
                         var current = e.Current;
-                        x1 = MathF.Min(current.Bounds.X, x1);
-                        x2 = MathF.Max(current.Bounds.X + current.Bounds.Width, x2);
-                        y1 = MathF.Min(current.Bounds.Y, y1);
-                        y2 = MathF.Max(current.Bounds.Y + current.Bounds.Height, y2);
+                        x1 = MathF.Min(current.Inset.X, x1);
+                        x2 = MathF.Max(current.Inset.X + current.Inset.Width, x2);
+                        y1 = MathF.Min(current.Inset.Y, y1);
+                        y2 = MathF.Max(current.Inset.Y + current.Inset.Height, y2);
 
-                        var pos2 = current.Bounds.XY;
+                        var pos2 = current.Inset.XY;
                         current.Offset = pos2 - pos1;
                     }
 
@@ -508,7 +508,7 @@ namespace GameProject {
             var all = _selectedEntities.ToArray();
             _historyHandler.AutoCommit = false;
             foreach (var e in all) {
-                HistoryRemoveEntity(e.Id, new RectangleF(e.Bounds.XY, e.Bounds.Size), e.Order, e.Type);
+                HistoryRemoveEntity(e.Id, new RectangleF(e.Inset.XY, e.Inset.Size), e.Order, e.Type);
                 _selectedEntities.Remove(e);
             }
             _historyHandler.Commit();
@@ -522,14 +522,14 @@ namespace GameProject {
                 using (IEnumerator<Entity> e = _selectedEntities.OrderBy(e => e).GetEnumerator()) {
                     e.MoveNext();
                     var current = e.Current;
-                    var pos1 = current.Bounds.XY;
-                    _pasteBuffer.Enqueue(new EntityPaste(new RectangleF(0, 0, current.Bounds.Width, current.Bounds.Height), current.Type));
+                    var pos1 = current.Inset.XY;
+                    _pasteBuffer.Enqueue(new EntityPaste(new RectangleF(0, 0, current.Inset.Width, current.Inset.Height), current.Type));
 
                     while (e.MoveNext()) {
                         current = e.Current;
-                        var pos2 = current.Bounds.XY;
+                        var pos2 = current.Inset.XY;
 
-                        _pasteBuffer.Enqueue(new EntityPaste(new RectangleF(pos2 - pos1, new Vector2(current.Bounds.Width, current.Bounds.Height)), current.Type));
+                        _pasteBuffer.Enqueue(new EntityPaste(new RectangleF(pos2 - pos1, new Vector2(current.Inset.Width, current.Inset.Height)), current.Type));
                     }
                 }
             }
@@ -541,7 +541,8 @@ namespace GameProject {
         private void Create() {
             _shouldAddNewToHover = true;
             // FIXME: This can crash if there are no "bleeders".
-            HistoryCreateEntity(GetNextId(), new RectangleF(Camera.MouseWorld, Assets.Bleeders[0].Source.Size), GetNextOrder(), 0);
+            var bleeder = Assets.Bleeders[0];
+            HistoryCreateEntity(GetNextId(), new RectangleF(Camera.MouseWorld, bleeder.Source.Size.ToVector2() * bleeder.Inset.Size), GetNextOrder(), 0);
             _shouldAddNewToHover = false;
         }
         private void CreateStuff() {

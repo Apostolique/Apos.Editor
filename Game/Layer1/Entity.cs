@@ -8,7 +8,7 @@ namespace GameProject {
     public class Entity : IBounds, IComparable<Entity> {
         public Entity(uint id, RectangleF r, uint order, int type) {
             Id = id;
-            Bounds = new RotRect(r.X, r.Y, r.Width, r.Height);
+            Inset = new RotRect(r.X, r.Y, r.Width, r.Height);
             Order = order;
             Type = type;
         }
@@ -26,13 +26,27 @@ namespace GameProject {
                 float width = Bounds.Width * bleeder.Inset.Width;
                 float height = Bounds.Height * bleeder.Inset.Height;
 
-                float x = Bounds.X + bleeder.Inset.X * Bounds.Width;
-                float y = Bounds.Y + bleeder.Inset.Y * Bounds.Height;
+                float x = Bounds.X + Bounds.Width * bleeder.Inset.X;
+                float y = Bounds.Y + Bounds.Height * bleeder.Inset.Y;
 
-                _inset = new RectangleF(x, y, width, height);
+                _inset = new RotRect(x, y, width, height);
             }
         }
-        public RectangleF Inset => _inset;
+        public RotRect Inset {
+            get => _inset;
+            set {
+                _inset = value;
+
+                var bleeder = Assets.Bleeders[Type];
+                float width = _inset.Width / bleeder.Inset.Width;
+                float height = _inset.Height / bleeder.Inset.Height;
+
+                float x = _inset.X - width * bleeder.Inset.X;
+                float y = _inset.Y - height * bleeder.Inset.Y;
+
+                _bounds = new RotRect(x, y, width, height);
+            }
+        }
         public uint Order {
             get;
             set;
@@ -56,7 +70,7 @@ namespace GameProject {
         public void DrawHighlight(SpriteBatch s, float distance, float thickness, Color c) {
             s.DrawRectangle(Utility.ExpandRect(new RectangleF(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height), distance * Camera.ScreenToWorldScale), c, thickness * Camera.ScreenToWorldScale);
 
-            s.DrawRectangle(Utility.ExpandRect(_inset, distance * Camera.ScreenToWorldScale), c, thickness * Camera.ScreenToWorldScale);
+            s.DrawRectangle(Utility.ExpandRect(new RectangleF(_inset.X, _inset.Y, _inset.Width, _inset.Height), distance * Camera.ScreenToWorldScale), c, thickness * Camera.ScreenToWorldScale);
         }
 
         public int CompareTo(Entity? value) {
@@ -72,7 +86,7 @@ namespace GameProject {
         }
 
         RotRect _bounds;
-        RectangleF _inset;
+        RotRect _inset;
     }
     public class EntityPaste {
         public EntityPaste(RectangleF rect, int type) {
