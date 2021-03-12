@@ -73,8 +73,8 @@ namespace GameProject {
                 RemoveModifier,
                 SkipEditModifier
             );
-        public static ICondition ResetOrder =
-            new KeyboardCondition(Keys.O);
+        public static ICondition ResetOrder = new KeyboardCondition(Keys.O);
+        public static ICondition ResetResize = new KeyboardCondition(Keys.R);
 
         public static ICondition CreateStuff = new KeyboardCondition(Keys.F1);
         public static ICondition ResetDroppedFrames = new KeyboardCondition(Keys.F2);

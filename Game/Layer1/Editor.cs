@@ -121,6 +121,10 @@ namespace GameProject {
                 ResetOrder();
             }
 
+            if (Triggers.ResetResize.Pressed()) {
+                ResetResize();
+            }
+
             if (Triggers.Remove.Pressed()) {
                 Remove();
             }
@@ -501,6 +505,18 @@ namespace GameProject {
             _historyHandler.AutoCommit = true;
 
             _order = Math.Max(_order, _lastOrder + 1);
+        }
+
+        private void ResetResize() {
+            _historyHandler.AutoCommit = false;
+            foreach (var e in _selectedEntities) {
+                var bleeder = Assets.Bleeders[e.Type];
+                HistoryResizeEntity(e.Id, e.Inset.Size, bleeder.Source.Size.ToVector2() * bleeder.Inset.Size);
+            }
+            _historyHandler.Commit();
+            _historyHandler.AutoCommit = true;
+
+            ComputedSelectionBounds();
         }
         private void Remove() {
             _edit.Rect = null;
