@@ -76,6 +76,7 @@ namespace GameProject {
             }
 
             Camera.UpdateInput();
+            Camera.Update();
 
             if (Triggers.Redo.Pressed()) {
                 _historyHandler.Redo();
@@ -140,7 +141,9 @@ namespace GameProject {
         }
         public void Draw(SpriteBatch s) {
             _selection.Draw(s);
-            _edit.Draw(s);
+            if (_selectedEntities.Count() == 1) {
+                _edit.Draw(s);
+            }
 
             foreach (var e in _selectedEntities.Query(Camera.WorldBounds, Camera.Angle, Camera.Origin))
                 e.DrawHighlight(s, 0f, 2f, Color.White);
@@ -271,8 +274,8 @@ namespace GameProject {
                 // If there's a single element selected, it can have resize handles. Expand it's bounds to see if we're hovering that.
                 if (_selectedEntities.Count() == 1) {
                     first = _selectedEntities.First();
-                    var bounds = first.Bounds;
-                    addSelected = !bounds.Contains(Camera.MouseWorld) && Utility.ExpandRect(new RectangleF(bounds.X, bounds.Y, bounds.Width, bounds.Height), _edit.HandleDistanceWorld).Contains(Camera.MouseWorld);
+                    var inset = first.Inset;
+                    addSelected = !inset.Contains(Camera.MouseWorld) && Utility.ExpandRect(new RectangleF(inset.X, inset.Y, inset.Width, inset.Height), _edit.HandleDistanceWorld).Contains(Camera.MouseWorld);
                 }
 
                 IOrderedEnumerable<Entity> hoversUnderMouse;

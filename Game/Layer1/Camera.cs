@@ -24,10 +24,10 @@ namespace GameProject {
             }
 
             if (Triggers.RotateLeft.Pressed()) {
-                _camera.Angle += MathHelper.PiOver4;
+                _targetRotation += MathHelper.PiOver4;
             }
             if (Triggers.RotateRight.Pressed()) {
-                _camera.Angle -= MathHelper.PiOver4;
+                _targetRotation -= MathHelper.PiOver4;
             }
 
             MouseWorld = _camera.ScreenToWorld(InputHelper.NewMouse.X, InputHelper.NewMouse.Y);
@@ -45,14 +45,47 @@ namespace GameProject {
             }
         }
 
+        public static void Update() {
+            _camera.Scale = new Vector2(InterpolateTowardsTarget(_camera.Scale.X, _targetZoom, 0.1f, 0.001f));
+            _camera.Angle = InterpolateTowardsTarget(_camera.Angle, _targetRotation, 0.1f, 0.001f);
+        }
+
+        /// <summary>
+        /// Poor man's tweening function.
+        /// If the result is stored in the `from` value, it will create a nice interpolation over multiple frames.
+        /// </summary>
+        /// <param name="from">The value to start from.</param>
+        /// <param name="target">The value to reach.</param>
+        /// <param name="speed">A value between 0f and 1f.</param>
+        /// <param name="snapNear">When the difference between the target and the result is smaller than this value, the target will be returned.</param>
+        /// <returns></returns>
+        private static float InterpolateTowardsTarget(float from, float target, float speed, float snapNear) {
+            float result = MathHelper.Lerp(from, target, speed);
+
+            if (from < target) {
+                result = MathHelper.Clamp(result, from, target);
+            } else {
+                result = MathHelper.Clamp(result, target, from);
+            }
+
+            if (MathF.Abs(target - result) < snapNear) {
+                return target;
+            } else {
+                return result;
+            }
+        }
+
         private static float Zoom {
-            get => MathF.Log(_camera.ZFromScale(_camera.Scale.X, 0f) + 1);
+            get => MathF.Log(_camera.ZFromScale(_targetZoom, 0f) + 1);
             set {
-                _camera.Scale = new Vector2(_camera.ScaleFromZ(MathF.Exp(value) - 1, 0f));
+                _targetZoom = _camera.ScaleFromZ(MathF.Exp(value) - 1, 0f);
             }
         }
         private static Dcrew.Camera.Camera _camera = null!;
         private static Vector2 _dragAnchor = Vector2.Zero;
         private static bool _isDragging = false;
+
+        private static float _targetZoom = 1f;
+        private static float _targetRotation = 0f;
     }
 }
