@@ -46,8 +46,8 @@ namespace GameProject {
         }
 
         public static void Update() {
-            _camera.Scale = new Vector2(InterpolateTowardsTarget(_camera.Scale.X, _targetZoom, 0.1f, 0.001f));
-            _camera.Angle = InterpolateTowardsTarget(_camera.Angle, _targetRotation, 0.1f, 0.001f);
+            _camera.Scale = new Vector2(InterpolateTowardsTarget(_camera.Scale.X, _targetZoom, 0.1f, 0.0001f));
+            _camera.Angle = InterpolateTowardsTarget(_camera.Angle, _targetRotation, 0.1f, 0.0001f);
         }
 
         /// <summary>
@@ -58,7 +58,6 @@ namespace GameProject {
         /// <param name="target">The value to reach.</param>
         /// <param name="speed">A value between 0f and 1f.</param>
         /// <param name="snapNear">When the difference between the target and the result is smaller than this value, the target will be returned.</param>
-        /// <returns></returns>
         private static float InterpolateTowardsTarget(float from, float target, float speed, float snapNear) {
             float result = MathHelper.Lerp(from, target, speed);
 
