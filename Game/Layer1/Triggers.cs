@@ -49,7 +49,7 @@ namespace GameProject {
                 new Track.KeyboardCondition(Keys.Back),
                 new Track.KeyboardCondition(Keys.Delete)
             );
-        /// <summary>Adds more elements to an exising selection group.</summary>
+        /// <summary>Adds more elements to an existing selection group.</summary>
         public static ICondition AddModifier =
             new AnyCondition(
                 new KeyboardCondition(Keys.LeftShift),
