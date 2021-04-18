@@ -328,6 +328,7 @@ namespace GameProject {
 
         private void ApplySelection(bool addModifier, bool removeModifier) {
             if (!addModifier && !removeModifier) {
+                foreach (var e in _selectedEntities) e.Leaf2 = -1;
                 _selectedEntities.Clear();
             }
             if (removeModifier) {
@@ -362,7 +363,7 @@ namespace GameProject {
         private void ApplyEdit(bool isDone) {
             // If the edit rectangle isn't null, we have at least one selection.
             if (_edit.Rect != null) {
-                using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
+                using (IEnumerator<Entity> e = _selectedEntities.ToList().GetEnumerator()) {
                     e.MoveNext();
                     var first = e.Current;
 
@@ -426,6 +427,12 @@ namespace GameProject {
                                 var inset = first.Inset;
                                 inset.Position = first.Offset + offset;
                                 first.Inset = inset;
+                                if (_selectedEntities.Count() == 1) {
+                                    inset.Size = _edit.Rect.Value.Size;
+                                    first.Inset = inset;
+                                }
+                                _aabbTree.Update(first.Leaf1, first.Rect);
+                                _selectedEntities.Update(first.Leaf2, first.Rect);
 
                                 while (e.MoveNext()) {
                                     var current = e.Current;
@@ -435,13 +442,6 @@ namespace GameProject {
                                     _aabbTree.Update(current.Leaf1, current.Rect);
                                     _selectedEntities.Update(current.Leaf2, current.Rect);
                                 }
-
-                                if (_selectedEntities.Count() == 1) {
-                                    inset.Size = _edit.Rect.Value.Size;
-                                    first.Inset = inset;
-                                }
-                                _aabbTree.Update(first.Leaf1, first.Rect);
-                                _selectedEntities.Update(first.Leaf2, first.Rect);
                             }
                         }
                     } else if (_editRectInitialStartXY != (Vector2)_edit.Rect.Value.Position || _editRectInitialStartSize != (Vector2)_edit.Rect.Value.Size) {
@@ -453,13 +453,13 @@ namespace GameProject {
                         _historyHandler.AutoCommit = false;
                         HistoryMoveEntity(first.Id, first.Offset + oldOffset, first.Offset + newOffset);
 
+                        if (_selectedEntities.Count() == 1) {
+                            HistoryResizeEntity(first.Id, _editRectInitialStartSize, _edit.Rect.Value.Size);
+                        }
+
                         while (e.MoveNext()) {
                             var current = e.Current;
                             HistoryMoveEntity(current.Id, current.Offset + oldOffset, current.Offset + newOffset);
-                        }
-
-                        if (_selectedEntities.Count() == 1) {
-                            HistoryResizeEntity(first.Id, _editRectInitialStartSize, _edit.Rect.Value.Size);
                         }
                         _historyHandler.Commit();
                         _historyHandler.AutoCommit = true;
