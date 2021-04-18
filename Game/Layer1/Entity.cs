@@ -1,14 +1,14 @@
 using System;
-using Dcrew.Spatial;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
 
 namespace GameProject {
-    public class Entity : IBounds, IComparable<Entity> {
+    public class Entity : IComparable<Entity> {
         public Entity(uint id, RectangleF r, uint order, int type) {
             Id = id;
-            Inset = new RotRect(r.X, r.Y, r.Width, r.Height);
+            Inset = new RectangleF(r.X, r.Y, r.Width, r.Height);
             Order = order;
             Type = type;
         }
@@ -17,22 +17,30 @@ namespace GameProject {
             get;
             set;
         }
-        public RotRect Bounds {
-            get => _bounds;
+        public int Leaf1 {
+            get;
+            set;
+        } = -1;
+        public int Leaf2 {
+            get;
+            set;
+        } = -1;
+        public RectangleF Rect {
+            get => _rect;
             set {
-                _bounds = value;
+                _rect = value;
 
                 var bleeder = Assets.Bleeders[Type];
-                float width = Bounds.Width * bleeder.Inset.Width;
-                float height = Bounds.Height * bleeder.Inset.Height;
+                float width = _rect.Width * bleeder.Inset.Width;
+                float height = _rect.Height * bleeder.Inset.Height;
 
-                float x = Bounds.X + Bounds.Width * bleeder.Inset.X;
-                float y = Bounds.Y + Bounds.Height * bleeder.Inset.Y;
+                float x = _rect.X + _rect.Width * bleeder.Inset.X;
+                float y = _rect.Y + _rect.Height * bleeder.Inset.Y;
 
-                _inset = new RotRect(x, y, width, height);
+                _inset = new RectangleF(x, y, width, height);
             }
         }
-        public RotRect Inset {
+        public RectangleF Inset {
             get => _inset;
             set {
                 _inset = value;
@@ -44,7 +52,7 @@ namespace GameProject {
                 float x = _inset.X - width * bleeder.Inset.X;
                 float y = _inset.Y - height * bleeder.Inset.Y;
 
-                _bounds = new RotRect(x, y, width, height);
+                _rect = new RectangleF(x, y, width, height);
             }
         }
         public uint Order {
@@ -65,10 +73,10 @@ namespace GameProject {
 
         public void Draw(SpriteBatch s) {
             var bleeder = Assets.Bleeders[Type];
-            s.Draw(bleeder.Texture, new Rectangle((int)Bounds.X, (int)Bounds.Y, (int)Bounds.Width, (int)Bounds.Height), bleeder.Source, Color.White);
+            s.Draw(bleeder.Texture, new Rectangle((int)_rect.X, (int)_rect.Y, (int)_rect.Width, (int)_rect.Height), bleeder.Source, Color.White);
         }
         public void DrawHighlight(SpriteBatch s, float distance, float thickness, Color c) {
-            s.DrawRectangle(Utility.ExpandRect(new RectangleF(Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height), distance * Camera.ScreenToWorldScale), c, thickness * Camera.ScreenToWorldScale);
+            s.DrawRectangle(Utility.ExpandRect(new RectangleF(_rect.X, _rect.Y, _rect.Width, _rect.Height), distance * Camera.ScreenToWorldScale), c, thickness * Camera.ScreenToWorldScale);
 
             s.DrawRectangle(Utility.ExpandRect(new RectangleF(_inset.X, _inset.Y, _inset.Width, _inset.Height), distance * Camera.ScreenToWorldScale), c, thickness * Camera.ScreenToWorldScale);
         }
@@ -78,15 +86,17 @@ namespace GameProject {
             int compareTo = Order.CompareTo(value.Order);
             return compareTo == 0 ? Id.CompareTo(value.Id) : compareTo;
         }
-        public override int GetHashCode() {
-            return Id.GetHashCode();
+        public int GetHashCode([DisallowNull] Entity obj) {
+            return obj.Id.GetHashCode();
         }
-        public override bool Equals(object? obj) {
-            return obj is Entity && Id == ((Entity)obj).Id;
+        public bool Equals([AllowNull] Entity a, [AllowNull] Entity b) {
+            if (a == null && b == null) return true;
+            else if (a == null || b == null) return false;
+            else return a.Id == b.Id;
         }
 
-        RotRect _bounds;
-        RotRect _inset;
+        RectangleF _rect;
+        RectangleF _inset;
     }
     public class EntityPaste {
         public EntityPaste(RectangleF rect, int type) {

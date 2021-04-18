@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Apos.Gui;
 using Apos.Input;
 using Microsoft.Xna.Framework;
@@ -5,7 +6,7 @@ using MonoGame.Extended;
 
 namespace GameProject.UI {
     public class Sidebar : Panel {
-        public Sidebar(string name) : base(name) { }
+        public Sidebar(int id) : base(id) { }
 
         public bool IsLeftSide { get; set; }
 
@@ -70,25 +71,24 @@ namespace GameProject.UI {
                 }
             }
         }
-        public static new Sidebar Put(int id = 0, bool isLeftSide = false) {
+        public static new Sidebar Put([CallerLineNumber] int id = 0, bool isAbsoluteId = false, bool isLeftSide = false) {
             // 1. Check if panel with id already exists.
             //      a. If already exists. Get it.
             //      b  If not, create it.
             // 3. Push it on the stack.
             // 4. Ping it.
-            IParent? parent = GuiHelper.CurrentIMGUI.CurrentParent;
-            var fullName = GuiHelper.GenerateName(parent, "sidebar", id);
-
-            GuiHelper.CurrentIMGUI.TryGetValue(fullName, out IComponent c);
+            id = GuiHelper.CurrentIMGUI.CreateId(id, isAbsoluteId);
+            GuiHelper.CurrentIMGUI.TryGetValue(id, out IComponent c);
 
             Sidebar a;
             if (c is Sidebar) {
                 a = (Sidebar)c;
             } else {
-                a = new Sidebar(fullName);
-                GuiHelper.CurrentIMGUI.Add(fullName, a);
+                a = new Sidebar(id);
             }
             a.IsLeftSide = isLeftSide;
+
+            IParent? parent = GuiHelper.CurrentIMGUI.GrabParent(a);
 
             if (a.LastPing != InputHelper.CurrentFrame) {
                 a.Reset();

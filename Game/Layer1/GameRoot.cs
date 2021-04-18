@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Apos.Gui;
 using FontStashSharp;
 using System;
+using MonoGame.Extended;
 
 namespace GameProject {
     public class GameRoot : Game {
@@ -32,7 +33,7 @@ namespace GameProject {
             _graphics.SynchronizeWithVerticalRetrace = settings.IsVSync;
             _graphics.ApplyChanges();
 
-            Camera.Setup();
+            Camera.Setup(GraphicsDevice, Window);
 
             Assets.LoadFonts(Content, GraphicsDevice);
             Assets.Setup(Content);
@@ -70,7 +71,7 @@ namespace GameProject {
             _editor.DrawBackground(_s);
 
             _s.Begin(transformMatrix: Camera.View, samplerState: SamplerState.LinearClamp);
-            foreach (var e in _world.Quadtree.Query(Camera.WorldBounds, Camera.Angle, Camera.Origin).OrderBy(e => e))
+            foreach (var e in _world.AABBTree.Query(Camera.ViewRect).OrderBy(e => e))
                 e.Draw(_s);
             _editor.Draw(_s);
             _s.End();

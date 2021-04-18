@@ -1,21 +1,23 @@
 using System;
 using Apos.Input;
-using Dcrew.Camera;
+using A = Apos.Camera;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using MonoGame.Extended;
 
 namespace GameProject {
     public static class Camera {
-        public static void Setup() {
-            _camera = new Dcrew.Camera.Camera(new Vector2(0f, 0f), 0f, new Vector2(1f));
+        public static void Setup(GraphicsDevice graphicsDevice, GameWindow window) {
+            _camera = new A.Camera(new A.DefaultViewport(graphicsDevice, window));
         }
 
         public static Vector2 MouseWorld = Vector2.Zero;
-        public static Matrix View => _camera.View();
-        public static Matrix ViewInvert => _camera.ViewInvert();
-        public static Rectangle WorldBounds => _camera.WorldBounds();
-        public static float Angle => _camera.Angle;
-        public static Vector2 Origin => _camera.Origin;
-        public static float ScreenToWorldScale => 1f / _camera.ScreenToWorldScale();
+        public static Matrix View => _camera.View;
+        public static Matrix ViewInvert => _camera.ViewInvert;
+        public static RectangleF ViewRect => _camera.ViewRect;
+        public static float Rotation => _camera.Rotation;
+        public static Vector2 Origin => _camera.VirtualViewport.Origin;
+        public static float ScreenToWorldScale => _camera.ScreenToWorldScale();
 
         public static void UpdateInput() {
             int scrollDelta = InputHelper.NewMouse.ScrollWheelValue - InputHelper.OldMouse.ScrollWheelValue;
@@ -47,7 +49,7 @@ namespace GameProject {
 
         public static void Update() {
             _camera.Scale = new Vector2(InterpolateTowardsTarget(_camera.Scale.X, _targetZoom, 0.1f, 0.0001f));
-            _camera.Angle = InterpolateTowardsTarget(_camera.Angle, _targetRotation, 0.1f, 0.0001f);
+            _camera.Rotation = InterpolateTowardsTarget(_camera.Rotation, _targetRotation, 0.1f, 0.0001f);
         }
 
         /// <summary>
@@ -75,12 +77,12 @@ namespace GameProject {
         }
 
         private static float Zoom {
-            get => MathF.Log(_camera.ZFromScale(_targetZoom, 0f) + 1);
+            get => MathF.Log(_camera.ScaleToZ(_targetZoom, 0f) + 1);
             set {
-                _targetZoom = _camera.ScaleFromZ(MathF.Exp(value) - 1, 0f);
+                _targetZoom = _camera.ZToScale(MathF.Exp(value) - 1, 0f);
             }
         }
-        private static Dcrew.Camera.Camera _camera = null!;
+        private static A.Camera _camera = null!;
         private static Vector2 _dragAnchor = Vector2.Zero;
         private static bool _isDragging = false;
 

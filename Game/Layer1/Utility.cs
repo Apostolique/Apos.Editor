@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using Dcrew.Spatial;
 using MonoGame.Extended;
 
 namespace GameProject {
@@ -41,11 +40,6 @@ namespace GameProject {
             return json;
         }
 
-        public static void ClearQuadtree(Quadtree<Entity> q) {
-            foreach (var e in q.ToArray()) {
-                q.Remove(e);
-            }
-        }
         public static RectangleF ExpandRect(RectangleF r, float distance) {
             return new RectangleF(r.X - distance, r.Y - distance, r.Width + distance * 2, r.Height + distance * 2);
         }

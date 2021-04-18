@@ -4,7 +4,7 @@ using System.Linq;
 using Apos.Gui;
 using Apos.History;
 using Apos.Input;
-using Dcrew.Spatial;
+using Apos.Spatial;
 using GameProject.UI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -14,11 +14,11 @@ namespace GameProject {
     public class Editor {
         public Editor(World world, GraphicsDevice graphicsDevice) {
             _world = world;
-            _quadtree = _world.Quadtree;
+            _aabbTree = _world.AABBTree;
             _entities = _world.Entities;
 
             _historyHandler = new HistoryHandler(null);
-            _selectedEntities = new Quadtree<Entity>();
+            _selectedEntities = new AABBTree<Entity>();
 
             _selection = new RectEdit();
             _edit = new RectEdit();
@@ -141,11 +141,11 @@ namespace GameProject {
         }
         public void Draw(SpriteBatch s) {
             _selection.Draw(s);
-            if (_selectedEntities.Count() == 1) {
+            // if (_selectedEntities.Count() == 1) {
                 _edit.Draw(s);
-            }
+            // }
 
-            foreach (var e in _selectedEntities.Query(Camera.WorldBounds, Camera.Angle, Camera.Origin))
+            foreach (var e in _selectedEntities.Query(Camera.ViewRect))
                 e.DrawHighlight(s, 0f, 2f, Color.White);
             foreach (var e in GetHovers(true))
                 e.DrawHighlight(s, -2f, 3f, Color.Black);
@@ -231,31 +231,34 @@ namespace GameProject {
         }
         private void CreateEntity(uint id, RectangleF r, uint order, int type) {
             Entity e = new Entity(id, r, order, type);
-            _quadtree.Add(e);
+            e.Leaf1 = _aabbTree.Add(e.Rect, e);
             _entities.Add(e.Id, e);
             if (_shouldAddNewToHover) _newEntitiesHover.Push(e.Id);
         }
         private void RemoveEntity(uint id) {
             Entity e = _entities[id];
-            _quadtree.Remove(e);
+            _aabbTree.Remove(e.Leaf1);
             _entities.Remove(e.Id);
-            _selectedEntities.Remove(e);
+            if (e.Leaf2 != -1) _selectedEntities.Remove(e.Leaf2);
+
+            e.Leaf1 = -1;
+            e.Leaf2 = -1;
         }
         private void MoveEntity(uint id, Vector2 xy) {
             Entity e = _entities[id];
             var inset = e.Inset;
-            inset.XY = xy;
+            inset.Position = xy;
             e.Inset = inset;
-            _quadtree.Update(e);
-            _selectedEntities.Update(e);
+            _aabbTree.Update(e.Leaf1, e.Rect);
+            if (e.Leaf2 != -1) _selectedEntities.Update(e.Leaf2, e.Rect);
         }
         private void ResizeEntity(uint id, Vector2 size) {
             Entity e = _entities[id];
             var inset = e.Inset;
             inset.Size = size;
             e.Inset = inset;
-            _quadtree.Update(e);
-            _selectedEntities.Update(e);
+            _aabbTree.Update(e.Leaf1, e.Rect);
+            if (e.Leaf2 != -1) _selectedEntities.Update(e.Leaf2, e.Rect);
         }
         private void OrderEntity(uint id, uint order) {
             Entity e = _entities[id];
@@ -278,23 +281,24 @@ namespace GameProject {
                     addSelected = !inset.Contains(Camera.MouseWorld) && Utility.ExpandRect(new RectangleF(inset.X, inset.Y, inset.Width, inset.Height), _edit.HandleDistanceWorld).Contains(Camera.MouseWorld);
                 }
 
-                IOrderedEnumerable<Entity> hoversUnderMouse;
-                IOrderedEnumerable<Entity> selectedAndHovered;
+                List<Entity> hoversUnderMouse;
+                List<Entity> selectedAndHovered;
                 if (addSelected) {
-                    hoversUnderMouse = _quadtree.Query(Camera.MouseWorld).Append(first!).OrderBy(e => e);
+                    hoversUnderMouse = _aabbTree.Query(Camera.MouseWorld).Append(first!).OrderBy(e => e).ToList();
                     // This can only happen when there's only 1 selection so we can do a special case here.
-                    selectedAndHovered = new Entity[] { first! }.OrderBy(e => 1);
+                    selectedAndHovered = new Entity[] { first! }.OrderBy(e => 1).ToList();
                 } else {
-                    hoversUnderMouse = _quadtree.Query(Camera.MouseWorld).OrderBy(e => e);
-                    selectedAndHovered = _selectedEntities.Query(Camera.MouseWorld).OrderBy(e => e);
+                    hoversUnderMouse = _aabbTree.Query(Camera.MouseWorld).OrderBy(e => e).ToList();
+                    selectedAndHovered = _selectedEntities.Query(Camera.MouseWorld).OrderBy(e => e).ToList();
                 }
+
                 var hoverCount = hoversUnderMouse.Count();
                 // Skip if there are no hovers.
                 if (hoverCount > 0) {
                     int cycleReset = 0;
                     // If there's a selection, always give it priority over everything else.
                     if (selectedAndHovered.Count() > 0) {
-                        cycleReset = hoverCount - 1 - hoversUnderMouse.ToList().IndexOf(selectedAndHovered.Last());
+                        cycleReset = hoverCount - 1 - hoversUnderMouse.IndexOf(selectedAndHovered.Last());
                         // If we aren't cycling, then select the last selection. The one that is on top of everything.
                         if (_cycleMouse == null) {
                             _cycleIndex = cycleReset;
@@ -324,11 +328,12 @@ namespace GameProject {
 
         private void ApplySelection(bool addModifier, bool removeModifier) {
             if (!addModifier && !removeModifier) {
-                Utility.ClearQuadtree(_selectedEntities);
+                _selectedEntities.Clear();
             }
             if (removeModifier) {
                 foreach (var e in GetHovers()) {
-                    _selectedEntities.Remove(e);
+                    _selectedEntities.Remove(e.Leaf2);
+                    e.Leaf2 = -1;
                 }
             } else {
                 bool preserveOrder = _selectedEntities.Count() == 0;
@@ -340,7 +345,7 @@ namespace GameProject {
                             e.NextOrder = ++_lastOrder;
                         }
                         _lastOrder = e.NextOrder;
-                        _selectedEntities.Add(e);
+                        e.Leaf2 = _selectedEntities.Add(e.Rect, e);
                     }
                 }
             }
@@ -413,41 +418,42 @@ namespace GameProject {
                         if (_editRectStartXY != (Vector2)_edit.Rect.Value.Position || _editRectStartSize != (Vector2)_edit.Rect.Value.Size) {
                             _editRectStartXY = _edit.Rect.Value.Position;
                             _editRectStartSize = _edit.Rect.Value.Size;
+                            Vector2 offset = _editAnchor + _edit.Rect.Value.Position;
 
                             if (!isDone) {
                                 var inset = first.Inset;
-                                inset.XY = first.Offset + _edit.Rect.Value.Position;
+                                inset.Position = first.Offset + offset;
                                 first.Inset = inset;
 
                                 while (e.MoveNext()) {
                                     var current = e.Current;
                                     inset = current.Inset;
-                                    inset.XY = current.Offset + first.Inset.XY;
+                                    inset.Position = current.Offset + offset;
                                     current.Inset = inset;
-                                    _quadtree.Update(current);
-                                    _selectedEntities.Update(current);
+                                    _aabbTree.Update(current.Leaf1, current.Rect);
+                                    _selectedEntities.Update(current.Leaf2, current.Rect);
                                 }
 
                                 if (_selectedEntities.Count() == 1) {
                                     inset.Size = _edit.Rect.Value.Size;
                                     first.Inset = inset;
                                 }
-                                _quadtree.Update(first);
-                                _selectedEntities.Update(first);
+                                _aabbTree.Update(first.Leaf1, first.Rect);
+                                _selectedEntities.Update(first.Leaf2, first.Rect);
                             }
                         }
                     } else if (_editRectInitialStartXY != (Vector2)_edit.Rect.Value.Position || _editRectInitialStartSize != (Vector2)_edit.Rect.Value.Size) {
                         _editRectStartXY = _edit.Rect.Value.Position;
                         _editRectStartSize = _edit.Rect.Value.Size;
+                        Vector2 oldOffset = _editAnchor + _editRectInitialStartXY;
+                        Vector2 newOffset = _editAnchor + _edit.Rect.Value.Position;
 
                         _historyHandler.AutoCommit = false;
-                        Vector2 oldFirstStart = first.Offset + _editRectInitialStartXY;
-                        Vector2 newFirstSTart = first.Offset + _edit.Rect.Value.Position;
-                        HistoryMoveEntity(first.Id, oldFirstStart, newFirstSTart);
+                        HistoryMoveEntity(first.Id, first.Offset + oldOffset, first.Offset + newOffset);
 
                         while (e.MoveNext()) {
                             var current = e.Current;
-                            HistoryMoveEntity(current.Id, current.Offset + oldFirstStart, current.Offset + newFirstSTart);
+                            HistoryMoveEntity(current.Id, current.Offset + oldOffset, current.Offset + newOffset);
                         }
 
                         if (_selectedEntities.Count() == 1) {
@@ -467,7 +473,6 @@ namespace GameProject {
                 using (IEnumerator<Entity> e = _selectedEntities.GetEnumerator()) {
                     e.MoveNext();
                     var first = e.Current;
-                    var pos1 = first.Inset.XY;
 
                     float x1 = first.Inset.X;
                     float x2 = first.Inset.X + first.Inset.Width;
@@ -481,15 +486,15 @@ namespace GameProject {
                         y1 = MathF.Min(current.Inset.Y, y1);
                         y2 = MathF.Max(current.Inset.Y + current.Inset.Height, y2);
 
-                        var pos2 = current.Inset.XY;
-                        current.Offset = pos2 - pos1;
+                        current.Offset = current.Inset.Position;
                     }
 
                     _edit.IsResizable = _selectedEntities.Count() == 1;
                     _editRectStartXY = new Vector2(x1, y1);
                     _editRectStartSize = new Vector2(x2 - x1, y2 - y1);
                     _edit.Rect = new RectangleF(_editRectStartXY, _editRectStartSize);
-                    first.Offset = pos1 - _editRectStartXY;
+                    first.Offset = first.Inset.Position;
+                    _editAnchor = -_editRectStartXY;
 
                     _editRectInitialStartXY = _editRectStartXY;
                     _editRectInitialStartSize = _editRectStartSize;
@@ -527,8 +532,9 @@ namespace GameProject {
             var all = _selectedEntities.ToArray();
             _historyHandler.AutoCommit = false;
             foreach (var e in all) {
-                HistoryRemoveEntity(e.Id, new RectangleF(e.Inset.XY, e.Inset.Size), e.Order, e.Type);
-                _selectedEntities.Remove(e);
+                HistoryRemoveEntity(e.Id, new RectangleF(e.Inset.Position, e.Inset.Size), e.Order, e.Type);
+                _selectedEntities.Remove(e.Leaf2);
+                e.Leaf2 = -1;
             }
             _historyHandler.Commit();
             _historyHandler.AutoCommit = true;
@@ -541,12 +547,12 @@ namespace GameProject {
                 using (IEnumerator<Entity> e = _selectedEntities.OrderBy(e => e).GetEnumerator()) {
                     e.MoveNext();
                     var current = e.Current;
-                    var pos1 = current.Inset.XY;
+                    var pos1 = current.Inset.Position;
                     _pasteBuffer.Enqueue(new EntityPaste(new RectangleF(0, 0, current.Inset.Width, current.Inset.Height), current.Type));
 
                     while (e.MoveNext()) {
                         current = e.Current;
-                        var pos2 = current.Inset.XY;
+                        var pos2 = current.Inset.Position;
 
                         _pasteBuffer.Enqueue(new EntityPaste(new RectangleF(pos2 - pos1, new Vector2(current.Inset.Width, current.Inset.Height)), current.Type));
                     }
@@ -567,7 +573,7 @@ namespace GameProject {
         private void CreateStuff() {
             _historyHandler.AutoCommit = false;
             for (int i = 0; i < 10000; i++) {
-                var screenBounds = Camera.WorldBounds;
+                var screenBounds = Camera.ViewRect;
                 var origin = Camera.Origin;
                 float minX = screenBounds.Left;
                 float maxX = screenBounds.Right;
@@ -601,13 +607,11 @@ namespace GameProject {
             } else if (_selection.Rect != null) {
                 if (!withinCamera) {
                     var r = _selection.Rect.Value;
-                    foreach (var e in _quadtree.Query(new RotRect(r.X, r.Y, r.Width, r.Height)))
+                    foreach (var e in _aabbTree.Query(new RectangleF(r.X, r.Y, r.Width, r.Height)))
                         yield return e;
                 } else {
-                    var origin = Camera.Origin;
-                    var worldBounds = new RectangleF(Camera.WorldBounds.Location.ToVector2() - origin, Camera.WorldBounds.Size);
-                    var r = _selection.Rect.Value.Intersection(worldBounds);
-                    foreach (var e in _quadtree.Query(new RotRect(r.X, r.Y, r.Width, r.Height)))
+                    var r = _selection.Rect.Value.Intersection(Camera.ViewRect);
+                    foreach (var e in _aabbTree.Query(new RectangleF(r.X, r.Y, r.Width, r.Height)))
                         yield return e;
                 }
             } else if (_hoveredEntity != null) {
@@ -617,7 +621,7 @@ namespace GameProject {
         }
 
         World _world;
-        Quadtree<Entity> _quadtree;
+        AABBTree<Entity> _aabbTree;
         Dictionary<uint, Entity> _entities;
 
         Random _random = new Random();
@@ -631,6 +635,7 @@ namespace GameProject {
 
         RectEdit _selection = null!;
         RectEdit _edit = null!;
+        Vector2 _editAnchor = Vector2.Zero;
         Vector2 _editRectInitialStartXY = Vector2.Zero;
         Vector2 _editRectInitialStartSize = Vector2.Zero;
         Vector2 _editRectStartXY = Vector2.Zero;
@@ -640,7 +645,7 @@ namespace GameProject {
 
         HistoryHandler _historyHandler = null!;
         Entity? _hoveredEntity;
-        Quadtree<Entity> _selectedEntities = null!;
+        AABBTree<Entity> _selectedEntities = null!;
         Queue<EntityPaste> _pasteBuffer = new Queue<EntityPaste>();
         uint _lastOrder = 0;
 
