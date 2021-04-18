@@ -332,8 +332,10 @@ namespace GameProject {
             }
             if (removeModifier) {
                 foreach (var e in GetHovers()) {
-                    _selectedEntities.Remove(e.Leaf2);
-                    e.Leaf2 = -1;
+                    if (e.Leaf2 != -1) {
+                        _selectedEntities.Remove(e.Leaf2);
+                        e.Leaf2 = -1;
+                    }
                 }
             } else {
                 bool preserveOrder = _selectedEntities.Count() == 0;
