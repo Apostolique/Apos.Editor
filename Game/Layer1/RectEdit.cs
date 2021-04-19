@@ -240,7 +240,7 @@ namespace GameProject {
             if (Rect != null) {
                 if (IsResizable) {
                     s.FillRectangle(Utility.ExpandRect(Rect.Value, HandleDistanceWorld), Color.White * 0.1f);
-                    s.DrawRectangle(Utility.ExpandRect(Rect.Value, HandleDistanceWorld), Color.White * 0.1f, Camera.ScreenToWorldScale);
+                    s.DrawRectangle(Utility.ExpandRect(Rect.Value, HandleDistanceWorld), Color.White * 0.3f, Camera.ScreenToWorldScale);
                 }
                 s.FillRectangle(Rect.Value, Color.White * 0.2f);
                 s.DrawRectangle(Rect.Value, Color.White * 0.2f, Camera.ScreenToWorldScale);
