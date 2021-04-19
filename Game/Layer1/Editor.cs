@@ -237,12 +237,9 @@ namespace GameProject {
         }
         private void RemoveEntity(uint id) {
             Entity e = _entities[id];
-            _aabbTree.Remove(e.Leaf1);
+            e.Leaf1 = _aabbTree.Remove(e.Leaf1);
             _entities.Remove(e.Id);
-            if (e.Leaf2 != -1) _selectedEntities.Remove(e.Leaf2);
-
-            e.Leaf1 = -1;
-            e.Leaf2 = -1;
+            e.Leaf2 = _selectedEntities.Remove(e.Leaf2);
         }
         private void MoveEntity(uint id, Vector2 xy) {
             Entity e = _entities[id];
@@ -250,7 +247,7 @@ namespace GameProject {
             inset.Position = xy;
             e.Inset = inset;
             _aabbTree.Update(e.Leaf1, e.Rect);
-            if (e.Leaf2 != -1) _selectedEntities.Update(e.Leaf2, e.Rect);
+            _selectedEntities.Update(e.Leaf2, e.Rect);
         }
         private void ResizeEntity(uint id, Vector2 size) {
             Entity e = _entities[id];
@@ -258,7 +255,7 @@ namespace GameProject {
             inset.Size = size;
             e.Inset = inset;
             _aabbTree.Update(e.Leaf1, e.Rect);
-            if (e.Leaf2 != -1) _selectedEntities.Update(e.Leaf2, e.Rect);
+            _selectedEntities.Update(e.Leaf2, e.Rect);
         }
         private void OrderEntity(uint id, uint order) {
             Entity e = _entities[id];
@@ -333,10 +330,7 @@ namespace GameProject {
             }
             if (removeModifier) {
                 foreach (var e in GetHovers()) {
-                    if (e.Leaf2 != -1) {
-                        _selectedEntities.Remove(e.Leaf2);
-                        e.Leaf2 = -1;
-                    }
+                    e.Leaf2 = _selectedEntities.Remove(e.Leaf2);
                 }
             } else {
                 bool preserveOrder = _selectedEntities.Count() == 0;
@@ -535,8 +529,7 @@ namespace GameProject {
             _historyHandler.AutoCommit = false;
             foreach (var e in all) {
                 HistoryRemoveEntity(e.Id, new RectangleF(e.Inset.Position, e.Inset.Size), e.Order, e.Type);
-                _selectedEntities.Remove(e.Leaf2);
-                e.Leaf2 = -1;
+                e.Leaf2 = _selectedEntities.Remove(e.Leaf2);
             }
             _historyHandler.Commit();
             _historyHandler.AutoCommit = true;
