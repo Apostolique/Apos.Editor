@@ -15,7 +15,17 @@
             "cwd": "${workspaceFolder}/Platforms/DesktopGL",
             // For more information about the 'console' field, see https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md#console-terminal-window
             "console": "internalConsole",
-            "stopAtEntry": false
+            "stopAtEntry": false,
+            // "justMyCode": false,
+            // "symbolOptions": {
+            //     "searchMicrosoftSymbolServer": true,
+            //     "searchNuGetOrgSymbolServer": true
+            // },
+            // "suppressJITOptimizations": true,
+            // "env": {
+            //     "COMPlus_ZapDisable": "1",
+            //     "COMPlus_ReadyToRun": "0"
+            // }
         },
         {
             "name": "Run WindowsDX platform",
