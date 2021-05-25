@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
@@ -22,7 +23,7 @@ namespace GameProject {
             set {
                 _rect = value;
 
-                var bleeder = Assets.Bleeders[Type];
+                var bleeder = Assets.Bleeders[_type];
                 float width = _rect.Width * bleeder.Inset.Width;
                 float height = _rect.Height * bleeder.Inset.Height;
 
@@ -37,7 +38,7 @@ namespace GameProject {
             set {
                 _inset = value;
 
-                var bleeder = Assets.Bleeders[Type];
+                var bleeder = Assets.Bleeders[_type];
                 float width = _inset.Width / bleeder.Inset.Width;
                 float height = _inset.Height / bleeder.Inset.Height;
 
@@ -48,14 +49,24 @@ namespace GameProject {
             }
         }
         public uint Order { get; set; }
-        public int Type { get; set; }
+        public int Type {
+            get => _type;
+            set {
+                if (Assets.Bleeders.ContainsKey(value)) {
+                    _type = value;
+                } else {
+                    _type = Assets.Bleeders.Keys.First();
+                }
+                Inset = Inset;
+            }
+        }
 
         // Not really part of the object. Useful for the editor.
         public Vector2 Offset { get; set; }
         public uint NextOrder { get; set; }
 
         public void Draw(SpriteBatch s) {
-            var bleeder = Assets.Bleeders[Type];
+            var bleeder = Assets.Bleeders[_type];
             s.Draw(bleeder.Texture, new Rectangle((int)_rect.X, (int)_rect.Y, (int)_rect.Width, (int)_rect.Height), bleeder.Source, Color.White);
         }
         public void DrawHighlight(SpriteBatch s, float distance, float thickness, Color c) {
@@ -80,6 +91,7 @@ namespace GameProject {
 
         RectangleF _rect;
         RectangleF _inset;
+        int _type;
     }
     public class EntityPaste {
         public EntityPaste(RectangleF rect, int type) {
