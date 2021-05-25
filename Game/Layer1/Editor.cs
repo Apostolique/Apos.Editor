@@ -185,10 +185,10 @@ namespace GameProject {
             return gridSize * MathF.Pow(2, MathF.Ceiling(MathF.Log2(gridWorld / gridSize)));
         }
 
-        private uint GetNextId() {
+        private uint GrabNextId() {
             return _lastId++;
         }
-        private uint GetNextOrder() {
+        private uint GrabNextOrder() {
             return _order++;
         }
         private void HistoryCreateEntity(uint id, RectangleF r, uint order, int type) {
@@ -588,7 +588,7 @@ namespace GameProject {
             _shouldAddNewToHover = true;
             // FIXME: This can crash if there are no "bleeders".
             var bleeder = Assets.Bleeders[0];
-            HistoryCreateEntity(GetNextId(), new RectangleF(Camera.MouseWorld, bleeder.Source.Size.ToVector2() * bleeder.Inset.Size), GetNextOrder(), 0);
+            HistoryCreateEntity(GrabNextId(), new RectangleF(Camera.MouseWorld, bleeder.Source.Size.ToVector2() * bleeder.Inset.Size), GrabNextOrder(), 0);
             _shouldAddNewToHover = false;
         }
         private void CreateStuff() {
@@ -602,7 +602,7 @@ namespace GameProject {
                 float maxY = screenBounds.Bottom;
 
                 // FIXME: This can crash if there are no "bleeders".
-                HistoryCreateEntity(GetNextId(), new RectangleF(new Vector2(_random.NextSingle(minX, maxX), _random.NextSingle(minY, maxY)) - origin, new Vector2(_random.NextSingle(50, 200), _random.NextSingle(50, 200))), GetNextOrder(), 0);
+                HistoryCreateEntity(GrabNextId(), new RectangleF(new Vector2(_random.NextSingle(minX, maxX), _random.NextSingle(minY, maxY)) - origin, new Vector2(_random.NextSingle(50, 200), _random.NextSingle(50, 200))), GrabNextOrder(), 0);
             }
             _historyHandler.Commit();
             _historyHandler.AutoCommit = true;
@@ -611,7 +611,7 @@ namespace GameProject {
             _shouldAddNewToHover = true;
             _historyHandler.AutoCommit = false;
             foreach (var e in _pasteBuffer) {
-                HistoryCreateEntity(GetNextId(), new RectangleF(anchor + e.Rect.Position, e.Rect.Size), GetNextOrder(), e.Type);
+                HistoryCreateEntity(GrabNextId(), new RectangleF(anchor + e.Rect.Position, e.Rect.Size), GrabNextOrder(), e.Type);
             }
             _historyHandler.Commit();
             _historyHandler.AutoCommit = true;
