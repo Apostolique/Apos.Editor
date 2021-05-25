@@ -282,6 +282,7 @@ namespace GameProject {
         private void TypeEntity(uint id, int type) {
             Entity e = _entities[id];
             e.Type = type;
+            e.Inset = e.Inset;
         }
 
         private void SingleHover() {
