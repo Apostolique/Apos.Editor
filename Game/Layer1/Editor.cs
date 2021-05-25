@@ -301,7 +301,7 @@ namespace GameProject {
                 if (addSelected) {
                     hoversUnderMouse = _aabbTree.Query(Camera.MouseWorld).Append(first!).OrderBy(e => e).ToList();
                     // This can only happen when there's only 1 selection so we can do a special case here.
-                    selectedAndHovered = new Entity[] { first! }.OrderBy(e => 1).ToList();
+                    selectedAndHovered = new List<Entity>{ first! };
                 } else {
                     hoversUnderMouse = _aabbTree.Query(Camera.MouseWorld).OrderBy(e => e).ToList();
                     selectedAndHovered = _selectedEntities.Query(Camera.MouseWorld).OrderBy(e => e).ToList();
@@ -314,14 +314,14 @@ namespace GameProject {
                     // If there's a selection, always give it priority over everything else.
                     if (selectedAndHovered.Count() > 0) {
                         cycleReset = hoverCount - 1 - hoversUnderMouse.IndexOf(selectedAndHovered.Last());
-                        // If we aren't cycling, then select the last selection. The one that is on top of everything.
-                        if (_cycleMouse == null) {
-                            _cycleIndex = cycleReset;
-                        }
                     }
 
+                    // If we aren't cycling, then select the selection at the top or element at the top.
+                    if (_cycleMouse == null) {
+                        _cycleIndex = cycleReset;
+                    }
                     // If we're current cycling over the hovers, we reset when the mouse moves enough.
-                    if (_cycleMouse != null && Vector2.DistanceSquared(_cycleMouse.Value, Camera.MouseWorld) > Utility.ScreenArea(10)) {
+                    else if (Vector2.DistanceSquared(_cycleMouse.Value, Camera.MouseWorld) > Utility.ScreenArea(10)) {
                         _cycleIndex = cycleReset;
                         _cycleMouse = null;
                     }
