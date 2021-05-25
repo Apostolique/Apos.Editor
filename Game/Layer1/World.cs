@@ -1,14 +1,11 @@
 using System.Collections.Generic;
 using Apos.Spatial;
-using Microsoft.Xna.Framework;
 
 namespace GameProject {
     public class World {
-        public World() {
-            AABBTree = new AABBTree<Entity>();
-        }
+        public World() { }
 
-        public AABBTree<Entity> AABBTree = null!;
+        public AABBTree<Entity> AABBTree = new AABBTree<Entity>();
         public Dictionary<uint, Entity> Entities = new Dictionary<uint, Entity>();
     }
 }

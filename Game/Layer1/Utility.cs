@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
 
 namespace GameProject {
@@ -52,6 +54,29 @@ namespace GameProject {
 
         public static int Mod(int x, int m) {
             return (x % m + m) % m;
+        }
+
+        public static void DrawParallelVertical(this SpriteBatch spriteBatch, RectangleF rectangle, Color color, float thickness = 1f, float layerDepth = 0) {
+            var texture = Assets.Pixel;
+            var topLeft = new Vector2(rectangle.X, rectangle.Y);
+            var topRight = new Vector2(rectangle.Right - thickness, rectangle.Y);
+            var bottomLeft = new Vector2(rectangle.X, rectangle.Bottom - thickness);
+            var horizontalScale = new Vector2(rectangle.Width, thickness);
+            var verticalScale = new Vector2(thickness, rectangle.Height);
+
+            spriteBatch.Draw(texture, topLeft, null, color, 0f, Vector2.Zero, verticalScale, SpriteEffects.None, layerDepth);
+            spriteBatch.Draw(texture, topRight, null, color, 0f, Vector2.Zero, verticalScale, SpriteEffects.None, layerDepth);
+        }
+        public static void DrawParallelHorizontal(this SpriteBatch spriteBatch, RectangleF rectangle, Color color, float thickness = 1f, float layerDepth = 0) {
+            var texture = Assets.Pixel;
+            var topLeft = new Vector2(rectangle.X, rectangle.Y);
+            var topRight = new Vector2(rectangle.Right - thickness, rectangle.Y);
+            var bottomLeft = new Vector2(rectangle.X, rectangle.Bottom - thickness);
+            var horizontalScale = new Vector2(rectangle.Width, thickness);
+            var verticalScale = new Vector2(thickness, rectangle.Height);
+
+            spriteBatch.Draw(texture, topLeft, null, color, 0f, Vector2.Zero, horizontalScale, SpriteEffects.None, layerDepth);
+            spriteBatch.Draw(texture, bottomLeft, null, color, 0f, Vector2.Zero, horizontalScale, SpriteEffects.None, layerDepth);
         }
     }
 }

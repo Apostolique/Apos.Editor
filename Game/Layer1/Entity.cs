@@ -13,18 +13,10 @@ namespace GameProject {
             Type = type;
         }
 
-        public uint Id {
-            get;
-            set;
-        }
-        public int Leaf1 {
-            get;
-            set;
-        } = -1;
-        public int Leaf2 {
-            get;
-            set;
-        } = -1;
+        public uint Id { get; set; }
+        public bool IsNegative { get; set; } = false;
+        public int Leaf1 { get; set; } = -1;
+        public int Leaf2 { get; set; } = -1;
         public RectangleF Rect {
             get => _rect;
             set {
@@ -55,21 +47,12 @@ namespace GameProject {
                 _rect = new RectangleF(x, y, width, height);
             }
         }
-        public uint Order {
-            get;
-            set;
-        }
+        public uint Order { get; set; }
         public int Type { get; set; }
 
         // Not really part of the object. Useful for the editor.
-        public Vector2 Offset {
-            get;
-            set;
-        }
-        public uint NextOrder {
-            get;
-            set;
-        }
+        public Vector2 Offset { get; set; }
+        public uint NextOrder { get; set; }
 
         public void Draw(SpriteBatch s) {
             var bleeder = Assets.Bleeders[Type];

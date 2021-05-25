@@ -25,9 +25,9 @@ namespace GameProject {
 
             _ui = new IMGUI();
 
-            int width = graphicsDevice.Viewport.Width;
-            int height = graphicsDevice.Viewport.Height;
-            _projection = Matrix.CreateOrthographicOffCenter(0, width, height, 0, 0, 1);
+            _pathEditor = new PathEditor(_aabbTree);
+
+            WindowResize(graphicsDevice.Viewport.Width, graphicsDevice.Viewport.Height);
         }
         public void WindowResize(int width, int height) {
             _projection = Matrix.CreateOrthographicOffCenter(0, width, height, 0, 0, 1);
@@ -135,11 +135,15 @@ namespace GameProject {
             if (Triggers.Copy.Pressed()) {
                 Copy();
             }
+
+            _pathEditor.UpdateInput();
         }
         public void DrawBackground(SpriteBatch s) {
             DrawGrid(s, _adaptiveGrid, _gridSize, new Color(60, 60, 60));
         }
         public void Draw(SpriteBatch s) {
+            _pathEditor.Draw(s);
+
             _selection.Draw(s);
             // if (_selectedEntities.Count() == 1) {
                 _edit.Draw(s);
@@ -234,28 +238,42 @@ namespace GameProject {
             e.Leaf1 = _aabbTree.Add(e.Rect, e);
             _entities.Add(e.Id, e);
             if (_shouldAddNewToHover) _newEntitiesHover.Push(e.Id);
+
+            _pathEditor.AddToPath((Rectangle)e.Inset, e.IsNegative);
         }
         private void RemoveEntity(uint id) {
             Entity e = _entities[id];
             e.Leaf1 = _aabbTree.Remove(e.Leaf1);
             _entities.Remove(e.Id);
             e.Leaf2 = _selectedEntities.Remove(e.Leaf2);
+
+            _pathEditor.RemoveFromPath((Rectangle)e.Inset);
         }
         private void MoveEntity(uint id, Vector2 xy) {
             Entity e = _entities[id];
+
+            RectangleF oldInset = e.Inset;
+
             var inset = e.Inset;
             inset.Position = xy;
             e.Inset = inset;
             _aabbTree.Update(e.Leaf1, e.Rect);
-            _selectedEntities.Update(e.Leaf2, e.Rect);
+            if (e.Leaf2 != -1) _selectedEntities.Update(e.Leaf2, e.Rect);
+
+            _pathEditor.UpdatePath((Rectangle)oldInset, (Rectangle)e.Inset, e.IsNegative);
         }
         private void ResizeEntity(uint id, Vector2 size) {
             Entity e = _entities[id];
+
+            RectangleF oldInset = e.Inset;
+
             var inset = e.Inset;
             inset.Size = size;
             e.Inset = inset;
             _aabbTree.Update(e.Leaf1, e.Rect);
-            _selectedEntities.Update(e.Leaf2, e.Rect);
+            if (e.Leaf2 != -1) _selectedEntities.Update(e.Leaf2, e.Rect);
+
+            _pathEditor.UpdatePath((Rectangle)oldInset, (Rectangle)e.Inset, e.IsNegative);
         }
         private void OrderEntity(uint id, uint order) {
             Entity e = _entities[id];
@@ -418,6 +436,8 @@ namespace GameProject {
                             Vector2 offset = _editAnchor + _edit.Rect.Value.Position;
 
                             if (!isDone) {
+                                RectangleF oldInset = first.Inset;
+
                                 var inset = first.Inset;
                                 inset.Position = first.Offset + offset;
                                 first.Inset = inset;
@@ -426,15 +446,21 @@ namespace GameProject {
                                     first.Inset = inset;
                                 }
                                 _aabbTree.Update(first.Leaf1, first.Rect);
-                                _selectedEntities.Update(first.Leaf2, first.Rect);
+                                if (first.Leaf2 != -1) _selectedEntities.Update(first.Leaf2, first.Rect);
+
+                                _pathEditor.UpdatePath((Rectangle)oldInset, (Rectangle)first.Inset, first.IsNegative);
 
                                 while (e.MoveNext()) {
                                     var current = e.Current;
+                                    oldInset = current.Inset;
+
                                     inset = current.Inset;
                                     inset.Position = current.Offset + offset;
                                     current.Inset = inset;
                                     _aabbTree.Update(current.Leaf1, current.Rect);
-                                    _selectedEntities.Update(current.Leaf2, current.Rect);
+                                    if (current.Leaf2 != -1) _selectedEntities.Update(current.Leaf2, current.Rect);
+
+                                    _pathEditor.UpdatePath((Rectangle)oldInset, (Rectangle)current.Inset, current.IsNegative);
                                 }
                             }
                         }
@@ -618,6 +644,8 @@ namespace GameProject {
         World _world;
         AABBTree<Entity> _aabbTree;
         Dictionary<uint, Entity> _entities;
+
+        PathEditor _pathEditor;
 
         Random _random = new Random();
 

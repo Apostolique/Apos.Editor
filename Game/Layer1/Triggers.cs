@@ -78,5 +78,10 @@ namespace GameProject {
 
         public static ICondition CreateStuff = new KeyboardCondition(Keys.F1);
         public static ICondition ResetDroppedFrames = new KeyboardCondition(Keys.F2);
+
+        public static ICondition ClearPaths = new KeyboardCondition(Keys.L);
+        public static ICondition ToggleNegativePath = new KeyboardCondition(Keys.P);
+        public static ICondition ToggleVertical = new KeyboardCondition(Keys.Y);
+        public static ICondition ToggleHorizontal = new KeyboardCondition(Keys.U);
     }
 }
