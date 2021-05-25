@@ -282,6 +282,8 @@ namespace GameProject {
         private void TypeEntity(uint id, int type) {
             Entity e = _entities[id];
             e.Type = type;
+            _aabbTree.Update(e.Leaf1, e.Rect);
+            if (e.Leaf2 != -1) _selectedEntities.Update(e.Leaf2, e.Rect);
         }
 
         private void SingleHover() {
