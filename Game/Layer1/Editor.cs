@@ -363,7 +363,7 @@ namespace GameProject {
             } else {
                 bool preserveOrder = _selectedEntities.Count() == 0;
                 foreach (var e in GetHovers().OrderBy(e => e)) {
-                    if (!_selectedEntities.Contains(e)) {
+                    if (e.Leaf2 == -1) {
                         if (preserveOrder) {
                             e.NextOrder = e.Order;
                         } else {
@@ -636,15 +636,14 @@ namespace GameProject {
                     yield return _entities[_newEntitiesHover.Pop()];
                 }
             } else if (_selection.Rect != null) {
+                RectangleF r;
                 if (!withinCamera) {
-                    var r = _selection.Rect.Value;
-                    foreach (var e in _aabbTree.Query(new RectangleF(r.X, r.Y, r.Width, r.Height)))
-                        yield return e;
+                    r = _selection.Rect.Value;
                 } else {
-                    var r = _selection.Rect.Value.Intersection(Camera.ViewRect);
-                    foreach (var e in _aabbTree.Query(new RectangleF(r.X, r.Y, r.Width, r.Height)))
-                        yield return e;
+                    r = _selection.Rect.Value.Intersection(Camera.ViewRect);
                 }
+                foreach (var e in _aabbTree.Query(new RectangleF(r.X, r.Y, r.Width, r.Height)))
+                    yield return e;
             } else if (_hoveredEntity != null) {
                 yield return _hoveredEntity;
             }
