@@ -19,6 +19,21 @@ namespace GameProject {
         public static Vector2 Origin => _camera.VirtualViewport.Origin;
         public static float ScreenToWorldScale => _camera.ScreenToWorldScale();
 
+        public static Matrix GetView(float z) => _camera.GetView(z);
+
+        public static float FocalLength {
+            get => _camera.FocalLength;
+            set {
+                _camera.FocalLength = value;
+            }
+        }
+        public static float Z {
+            get => _camera.Z;
+            set {
+                _camera.Z = value;
+            }
+        }
+
         public static void UpdateInput() {
             int scrollDelta = InputHelper.NewMouse.ScrollWheelValue - InputHelper.OldMouse.ScrollWheelValue;
             if (scrollDelta != 0 && !Triggers.SelectionCycle.Held(false)) {
@@ -48,7 +63,7 @@ namespace GameProject {
         }
 
         public static void Update() {
-            _camera.Scale = new Vector2(InterpolateTowardsTarget(_camera.Scale.X, _targetZoom, 0.1f, 0.0001f));
+            _camera.Z = _camera.ScaleToZ(InterpolateTowardsTarget(_camera.ZToScale(_camera.Z, 0f), _targetZoom, 0.1f, 0.0001f), 0f);
             _camera.Rotation = InterpolateTowardsTarget(_camera.Rotation, _targetRotation, 0.1f, 0.0001f);
         }
 
