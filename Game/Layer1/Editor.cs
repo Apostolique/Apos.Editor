@@ -63,6 +63,14 @@ namespace GameProject {
             }
             Label.Put("Adaptive Size");
             Label.Put($"{_adaptiveGrid}");
+            Label.Put("Focal length");
+            string fl = $"{Camera.FocalLength}";
+            Textbox.Put(ref fl);
+            if (float.TryParse(fl, out float focalLength)) {
+                var temp = Camera.Z / Camera.FocalLength;
+                Camera.FocalLength = focalLength;
+                Camera.Z = focalLength * temp;
+            }
             Sidebar.Pop();
 
             bool addModifier = false;
