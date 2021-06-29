@@ -1,0 +1,32 @@
+[
+    {
+        "texture_name": "woods",
+        "source": {
+            "x": 226,
+            "y": 189,
+            "width": 556,
+            "height": 204
+        },
+        "inset": {
+            "x": 342,
+            "y": 234,
+            "width": 373,
+            "height": 92
+        }
+    },
+    {
+        "texture_name": "woods",
+        "source": {
+            "x": 204,
+            "y": 574,
+            "width": 208,
+            "height": 438
+        },
+        "inset": {
+            "x": 253,
+            "y": 621,
+            "width": 106,
+            "height": 331
+        }
+    }
+]

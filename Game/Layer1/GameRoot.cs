@@ -10,6 +10,7 @@ namespace GameProject {
     public class GameRoot : Game {
         public GameRoot() {
             _graphics = new GraphicsDeviceManager(this);
+            _graphics.GraphicsProfile = GraphicsProfile.HiDef;
             IsMouseVisible = true;
             Content.RootDirectory = "Content";
         }
@@ -68,11 +69,11 @@ namespace GameProject {
 
             GraphicsDevice.Clear(new Color(0, 0, 0));
 
+            _world.DrawBackground(_s);
             _editor.DrawBackground(_s);
 
             _s.Begin(transformMatrix: Camera.View, samplerState: SamplerState.LinearClamp);
-            foreach (var e in _world.AABBTree.Query(Camera.ViewRect).OrderBy(e => e))
-                e.Draw(_s);
+            _world.Draw(_s);
             _editor.Draw(_s);
             _s.End();
 

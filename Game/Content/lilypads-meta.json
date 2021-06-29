@@ -1,0 +1,29 @@
+[
+    {
+        "texture_name": "lilypads",
+        "source": {
+            "x": 130,
+            "y": 113,
+            "width": 269,
+            "height": 280
+        }
+    },
+    {
+        "texture_name": "lilypads",
+        "source": {
+            "x": 550,
+            "y": 44,
+            "width": 360,
+            "height": 431
+        }
+    },
+    {
+        "texture_name": "lilypads",
+        "source": {
+            "x": 179,
+            "y": 463,
+            "width": 297,
+            "height": 373
+        }
+    }
+]

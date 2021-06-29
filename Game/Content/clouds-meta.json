@@ -1,0 +1,20 @@
+[
+    {
+        "texture_name": "clouds",
+        "source": {
+            "x": 171,
+            "y": 209,
+            "width": 441,
+            "height": 269
+        }
+    },
+    {
+        "texture_name": "clouds",
+        "source": {
+            "x": 77,
+            "y": 613,
+            "width": 335,
+            "height": 266
+        }
+    }
+]
