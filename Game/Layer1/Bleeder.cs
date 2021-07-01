@@ -7,6 +7,7 @@ namespace GameProject {
         public Texture2D Texture { get; set; }
         public Rectangle Source { get; set; }
         public RectangleF Inset { get; set; }
+        public int Layer { get; set; }
     }
 
     public class JsonBleeder {

@@ -52,14 +52,20 @@ namespace GameProject {
         public int Type {
             get => _type;
             set {
-                if (Assets.Bleeders.ContainsKey(value)) {
+                Bleeder? bleeder;
+                if (Assets.Bleeders.TryGetValue(value, out bleeder)) {
                     _type = value;
                 } else {
-                    _type = Assets.Bleeders.Keys.First();
+                    var b = Assets.Bleeders.First();
+                    _type = b.Key;
+                    bleeder = b.Value;
                 }
-                Inset = Inset;
+
+                Inset = new RectangleF(_inset.Position, bleeder.Source.Size.ToVector2() * bleeder.Inset.Size);
+                Layer = bleeder.Layer;
             }
         }
+        public int Layer { get; set; }
 
         // Not really part of the object. Useful for the editor.
         public Vector2 Offset { get; set; }
@@ -71,14 +77,14 @@ namespace GameProject {
         }
         public void DrawHighlight(SpriteBatch s, float distance, float thickness, Color c) {
             s.DrawRectangle(Utility.ExpandRect(new RectangleF(_rect.X, _rect.Y, _rect.Width, _rect.Height), distance * Camera.ScreenToWorldScale), c, thickness * Camera.ScreenToWorldScale);
-
             s.DrawRectangle(Utility.ExpandRect(new RectangleF(_inset.X, _inset.Y, _inset.Width, _inset.Height), distance * Camera.ScreenToWorldScale), c, thickness * Camera.ScreenToWorldScale);
         }
 
         public int CompareTo(Entity? value) {
             if (value == null) return 1;
-            int compareTo = Order.CompareTo(value.Order);
-            return compareTo == 0 ? Id.CompareTo(value.Id) : compareTo;
+            int compareLayer = Layer.CompareTo(value.Layer);
+            int compareOrder = compareLayer == 0 ? Order.CompareTo(value.Order) : compareLayer;
+            return compareOrder == 0 ? Id.CompareTo(value.Id) : compareOrder;
         }
         public int GetHashCode([DisallowNull] Entity obj) {
             return obj.Id.GetHashCode();

@@ -37,12 +37,18 @@ namespace GameProject {
             Infinite = content.Load<Effect>("infinite");
         }
         public static void LoadAtlas(ContentManager content) {
-            int index = 0;
-            var meta = Utility.LoadJson<List<JsonBleeder>>(Path.Combine(content.RootDirectory, "woods-meta.json"));
+            LoadMeta(content, "lilypads-meta.json", 0);
+            LoadMeta(content, "woods-meta.json", 1);
+            LoadMeta(content, "clouds-meta.json", 2);
+        }
+
+        private static void LoadMeta(ContentManager content, string name, int layer) {
+            var meta = Utility.LoadJson<List<JsonBleeder>>(Path.Combine(content.RootDirectory, name));
             foreach (var e in meta) {
                 var b = new Bleeder {
                     Texture = content.Load<Texture2D>(e.texture_name),
-                    Source = new Rectangle(e.source.x, e.source.y, e.source.width, e.source.height)
+                    Source = new Rectangle(e.source.x, e.source.y, e.source.width, e.source.height),
+                    Layer = layer
                 };
 
                 if (e.inset != null) {
@@ -56,7 +62,7 @@ namespace GameProject {
                     b.Inset = new RectangleF(0, 0, 1, 1);
                 }
 
-                Bleeders.Add(index++, b);
+                Bleeders.Add(Bleeders.Count, b);
             }
         }
     }
