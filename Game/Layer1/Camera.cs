@@ -35,9 +35,8 @@ namespace GameProject {
         }
 
         public static void UpdateInput() {
-            int scrollDelta = InputHelper.NewMouse.ScrollWheelValue - InputHelper.OldMouse.ScrollWheelValue;
-            if (scrollDelta != 0 && !Triggers.SelectionCycle.Held(false)) {
-                Zoom = MathF.Min(MathF.Max(Zoom - scrollDelta * 0.001f, 0.2f), 4f);
+            if (MouseCondition.Scrolled() && !Triggers.SelectionCycle.Held(false)) {
+                Zoom = MathF.Min(MathF.Max(Zoom - MouseCondition.ScrollDelta * 0.001f, 0.2f), 4f);
             }
 
             if (Triggers.RotateLeft.Pressed()) {

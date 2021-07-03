@@ -336,9 +336,8 @@ namespace GameProject {
                         _cycleMouse = null;
                     }
                     // If we want to cycle over the hovers, save current mouse position so that we can reset later.
-                    int scrollDelta = InputHelper.NewMouse.ScrollWheelValue - InputHelper.OldMouse.ScrollWheelValue;
-                    if (scrollDelta != 0 && Triggers.SelectionCycle.Held()) {
-                        _cycleIndex += MathF.Sign(scrollDelta);
+                    if (MouseCondition.Scrolled() && Triggers.SelectionCycle.Held()) {
+                        _cycleIndex += MathF.Sign(MouseCondition.ScrollDelta);
                         _cycleMouse = Camera.MouseWorld;
                     }
 
