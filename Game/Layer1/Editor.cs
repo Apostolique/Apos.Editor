@@ -243,45 +243,28 @@ namespace GameProject {
         }
         private void CreateEntity(uint id, RectangleF r, uint order, int type) {
             Entity e = new Entity(id, r, order, type);
-            e.Leaf1 = _aabbTree.Add(e.Rect, e);
-            _entities.Add(e.Id, e);
             if (_shouldAddNewToHover) _newEntitiesHover.Push(e.Id);
 
-            _pathEditor.AddToPath((Rectangle)e.Inset, e.IsNegative);
+            AddEntityStorage(e);
         }
         private void RemoveEntity(uint id) {
             Entity e = _entities[id];
-            e.Leaf1 = _aabbTree.Remove(e.Leaf1);
-            _entities.Remove(e.Id);
-            e.Leaf2 = _selectedEntities.Remove(e.Leaf2);
 
-            _pathEditor.RemoveFromPath((Rectangle)e.Inset);
+            RemoveEntityStorage(e);
         }
         private void MoveEntity(uint id, Vector2 xy) {
             Entity e = _entities[id];
-
             RectangleF oldInset = e.Inset;
 
-            var inset = e.Inset;
-            inset.Position = xy;
-            e.Inset = inset;
-            _aabbTree.Update(e.Leaf1, e.Rect);
-            if (e.Leaf2 != -1) _selectedEntities.Update(e.Leaf2, e.Rect);
-
-            _pathEditor.UpdatePath((Rectangle)oldInset, (Rectangle)e.Inset, e.IsNegative);
+            e.Inset = new RectangleF(xy, e.Inset.Size);
+            UpdateEntityStorage(e, oldInset);
         }
         private void ResizeEntity(uint id, Vector2 size) {
             Entity e = _entities[id];
-
             RectangleF oldInset = e.Inset;
 
-            var inset = e.Inset;
-            inset.Size = size;
-            e.Inset = inset;
-            _aabbTree.Update(e.Leaf1, e.Rect);
-            if (e.Leaf2 != -1) _selectedEntities.Update(e.Leaf2, e.Rect);
-
-            _pathEditor.UpdatePath((Rectangle)oldInset, (Rectangle)e.Inset, e.IsNegative);
+            e.Inset = new RectangleF(e.Inset.Position, size);
+            UpdateEntityStorage(e, oldInset);
         }
         private void OrderEntity(uint id, uint order) {
             Entity e = _entities[id];
@@ -289,10 +272,25 @@ namespace GameProject {
         }
         private void TypeEntity(uint id, int type) {
             Entity e = _entities[id];
-
             RectangleF oldInset = e.Inset;
 
             e.Type = type;
+            UpdateEntityStorage(e, oldInset);
+        }
+        private void AddEntityStorage(Entity e) {
+            _entities.Add(e.Id, e);
+            e.Leaf1 = _aabbTree.Add(e.Rect, e);
+
+            _pathEditor.AddToPath((Rectangle)e.Inset, e.IsNegative);
+        }
+        private void RemoveEntityStorage(Entity e) {
+            _entities.Remove(e.Id);
+            e.Leaf1 = _aabbTree.Remove(e.Leaf1);
+            e.Leaf2 = _selectedEntities.Remove(e.Leaf2);
+
+            _pathEditor.RemoveFromPath((Rectangle)e.Inset);
+        }
+        private void UpdateEntityStorage(Entity e, RectangleF oldInset) {
             _aabbTree.Update(e.Leaf1, e.Rect);
             if (e.Leaf2 != -1) _selectedEntities.Update(e.Leaf2, e.Rect);
 
