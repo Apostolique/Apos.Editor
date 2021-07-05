@@ -289,9 +289,14 @@ namespace GameProject {
         }
         private void TypeEntity(uint id, int type) {
             Entity e = _entities[id];
+
+            RectangleF oldInset = e.Inset;
+
             e.Type = type;
             _aabbTree.Update(e.Leaf1, e.Rect);
             if (e.Leaf2 != -1) _selectedEntities.Update(e.Leaf2, e.Rect);
+
+            _pathEditor.UpdatePath((Rectangle)oldInset, (Rectangle)e.Inset, e.IsNegative);
         }
 
         private void SingleHover() {
@@ -495,6 +500,10 @@ namespace GameProject {
 
                         _editRectInitialStartXY = _edit.Rect.Value.Position;
                         _editRectInitialStartSize = _edit.Rect.Value.Size;
+                    }
+
+                    if (_selectedEntities.Count() == 1 && !_edit.IsDragged) {
+                        _edit.Rect = first.Inset;
                     }
                 }
             }
