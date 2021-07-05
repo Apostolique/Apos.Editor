@@ -450,29 +450,19 @@ namespace GameProject {
                             if (!isDone) {
                                 RectangleF oldInset = first.Inset;
 
-                                var inset = first.Inset;
-                                inset.Position = first.Offset + offset;
-                                first.Inset = inset;
                                 if (_selectedEntities.Count() == 1) {
-                                    inset.Size = _edit.Rect.Value.Size;
-                                    first.Inset = inset;
+                                    first.Inset = new RectangleF(first.Offset + offset, _edit.Rect.Value.Size);
+                                } else {
+                                    first.Inset = new RectangleF(first.Offset + offset, first.Inset.Size);
                                 }
-                                _aabbTree.Update(first.Leaf1, first.Rect);
-                                if (first.Leaf2 != -1) _selectedEntities.Update(first.Leaf2, first.Rect);
-
-                                _pathEditor.UpdatePath((Rectangle)oldInset, (Rectangle)first.Inset, first.IsNegative);
+                                UpdateEntityStorage(first, oldInset);
 
                                 while (e.MoveNext()) {
                                     var current = e.Current;
                                     oldInset = current.Inset;
 
-                                    inset = current.Inset;
-                                    inset.Position = current.Offset + offset;
-                                    current.Inset = inset;
-                                    _aabbTree.Update(current.Leaf1, current.Rect);
-                                    if (current.Leaf2 != -1) _selectedEntities.Update(current.Leaf2, current.Rect);
-
-                                    _pathEditor.UpdatePath((Rectangle)oldInset, (Rectangle)current.Inset, current.IsNegative);
+                                    current.Inset = new RectangleF(current.Offset + offset, current.Inset.Size);
+                                    UpdateEntityStorage(current, oldInset);
                                 }
                             }
                         }
