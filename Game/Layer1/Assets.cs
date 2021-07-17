@@ -37,12 +37,12 @@ namespace GameProject {
             Infinite = content.Load<Effect>("infinite");
         }
         public static void LoadAtlas(ContentManager content) {
-            LoadMeta(content, "lilypads-meta.json", 0);
-            LoadMeta(content, "woods-meta.json", 1);
-            LoadMeta(content, "clouds-meta.json", 2);
+            LoadMeta(content, "lilypads-meta.json", World.LayerType.Lilypads);
+            LoadMeta(content, "woods-meta.json", World.LayerType.Woods);
+            LoadMeta(content, "clouds-meta.json", World.LayerType.Clouds);
         }
 
-        private static void LoadMeta(ContentManager content, string name, int layer) {
+        private static void LoadMeta(ContentManager content, string name, World.LayerType layer) {
             var meta = Utility.LoadJson<List<JsonBleeder>>(Path.Combine(content.RootDirectory, name));
             foreach (var e in meta) {
                 var b = new Bleeder {

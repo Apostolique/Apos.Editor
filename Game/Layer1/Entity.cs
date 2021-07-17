@@ -18,6 +18,7 @@ namespace GameProject {
         public bool IsNegative { get; set; } = false;
         public int Leaf1 { get; set; } = -1;
         public int Leaf2 { get; set; } = -1;
+        public int Leaf3 { get; set; } = -1;
         public RectangleF Rect {
             get => _rect;
             set {
@@ -65,7 +66,7 @@ namespace GameProject {
                 Layer = bleeder.Layer;
             }
         }
-        public int Layer { get; set; }
+        public World.LayerType Layer { get; set; }
 
         // Not really part of the object. Useful for the editor.
         public Vector2 Offset { get; set; }

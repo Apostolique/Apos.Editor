@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Apos.Spatial;
@@ -8,8 +9,20 @@ namespace GameProject {
     public class World {
         public World() { }
 
-        public AABBTree<Entity> AABBTree = new AABBTree<Entity>();
         public Dictionary<uint, Entity> Entities = new Dictionary<uint, Entity>();
+        public AABBTree<Entity> AABBTree = new AABBTree<Entity>();
+
+        public AABBTree<Entity> Lilypads = new AABBTree<Entity>();
+        public AABBTree<Entity> Woods = new AABBTree<Entity>();
+        public AABBTree<Entity> Clouds = new AABBTree<Entity>();
+
+        [Flags]
+        public enum LayerType {
+            None = 0,
+            Lilypads = 1,
+            Woods = 2,
+            Clouds = 4
+        }
 
         public void DrawBackground(SpriteBatch s) {
             int width = s.GraphicsDevice.Viewport.Width;

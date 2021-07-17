@@ -83,5 +83,9 @@ namespace GameProject {
         public static ICondition ToggleNegativePath = new KeyboardCondition(Keys.P);
         public static ICondition ToggleVertical = new KeyboardCondition(Keys.Y);
         public static ICondition ToggleHorizontal = new KeyboardCondition(Keys.U);
+
+        public static ICondition ToggleLilypads = new KeyboardCondition(Keys.D1);
+        public static ICondition ToggleWoods = new KeyboardCondition(Keys.D2);
+        public static ICondition ToggleClouds = new KeyboardCondition(Keys.D3);
     }
 }

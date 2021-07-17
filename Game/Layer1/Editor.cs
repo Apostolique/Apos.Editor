@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Apos.Gui;
@@ -142,6 +143,16 @@ namespace GameProject {
             }
             if (Triggers.Copy.Pressed()) {
                 Copy();
+            }
+
+            if (Triggers.ToggleLilypads.Pressed()) {
+                _activeLayers ^= World.LayerType.Lilypads;
+            }
+            if (Triggers.ToggleWoods.Pressed()) {
+                _activeLayers ^= World.LayerType.Woods;
+            }
+            if (Triggers.ToggleClouds.Pressed()) {
+                _activeLayers ^= World.LayerType.Clouds;
             }
 
             _pathEditor.UpdateInput();
@@ -312,11 +323,11 @@ namespace GameProject {
                 List<Entity> hoversUnderMouse;
                 List<Entity> selectedAndHovered;
                 if (addSelected) {
-                    hoversUnderMouse = _aabbTree.Query(Camera.MouseWorld).Append(first!).OrderBy(e => e).ToList();
+                    hoversUnderMouse = new QueryFilter(_aabbTree.Query(Camera.MouseWorld), _activeLayers).Append(first!).OrderBy(e => e).ToList();
                     // This can only happen when there's only 1 selection so we can do a special case here.
                     selectedAndHovered = new List<Entity>{ first! };
                 } else {
-                    hoversUnderMouse = _aabbTree.Query(Camera.MouseWorld).OrderBy(e => e).ToList();
+                    hoversUnderMouse = new QueryFilter(_aabbTree.Query(Camera.MouseWorld), _activeLayers).OrderBy(e => e).ToList();
                     selectedAndHovered = _selectedEntities.Query(Camera.MouseWorld).OrderBy(e => e).ToList();
                 }
 
@@ -638,7 +649,7 @@ namespace GameProject {
                 } else {
                     r = _selection.Rect.Value.Intersection(Camera.ViewRect);
                 }
-                foreach (var e in _aabbTree.Query(new RectangleF(r.X, r.Y, r.Width, r.Height)))
+                foreach (var e in new QueryFilter(_aabbTree.Query(new RectangleF(r.X, r.Y, r.Width, r.Height)), _activeLayers))
                     yield return e;
             } else if (_hoveredEntity != null) {
                 yield return _hoveredEntity;
@@ -646,9 +657,64 @@ namespace GameProject {
             yield break;
         }
 
+        private struct QueryFilter : IEnumerator<Entity>, IEnumerable<Entity> {
+            public QueryFilter(IEnumerable<Entity> query, World.LayerType filter) {
+                _query = query.GetEnumerator();
+                _filter = filter;
+                _isDone = false;
+                _isStarted = false;
+                _current = default!;
+            }
+
+            public Entity Current => _current;
+
+            object IEnumerator.Current {
+                get {
+                    if (!_isStarted || _isDone) {
+                        throw new InvalidOperationException("Enumeration has either not started or has already finished.");
+                    }
+                    return _current!;
+                }
+            }
+
+            public void Dispose() { }
+
+            public bool MoveNext() {
+                _isStarted = true;
+
+                while (_query.MoveNext()) {
+                    if (_filter.HasFlag(_query.Current.Layer)) {
+                        _current = _query.Current;
+                        return true;
+                    }
+                }
+
+                _isDone = true;
+                _current = default!;
+                return false;
+            }
+
+            public void Reset() {
+                _query.Reset();
+                _isDone = false;
+                _isStarted = false;
+            }
+
+            public IEnumerator<Entity> GetEnumerator() => this;
+            IEnumerator IEnumerable.GetEnumerator() => this;
+
+            IEnumerator<Entity> _query;
+            private World.LayerType _filter;
+            private Entity _current;
+            private bool _isDone;
+            private bool _isStarted;
+        }
+
         World _world;
         AABBTree<Entity> _aabbTree;
         Dictionary<uint, Entity> _entities;
+
+        World.LayerType _activeLayers = World.LayerType.Lilypads | World.LayerType.Woods | World.LayerType.Clouds;
 
         PathEditor _pathEditor;
 
