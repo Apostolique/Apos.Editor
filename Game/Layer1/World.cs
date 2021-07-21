@@ -29,7 +29,7 @@ namespace GameProject {
             int height = s.GraphicsDevice.Viewport.Height;
 
             Matrix projection = Matrix.CreateOrthographicOffCenter(0, width, height, 0, 0, 1);
-            Matrix uv_transform = GetUVTransform(Assets.Background, new Vector2(0, 0), 10f, s.GraphicsDevice.Viewport);
+            Matrix uv_transform = GetUVTransform(Assets.Background, new Vector2(0, 0), 50f, s.GraphicsDevice.Viewport);
 
             Assets.Infinite.Parameters["view_projection"].SetValue(Matrix.Identity * projection);
             Assets.Infinite.Parameters["uv_transform"].SetValue(Matrix.Invert(uv_transform));
@@ -52,7 +52,7 @@ namespace GameProject {
                 Matrix.CreateScale(t.Width, t.Height, 1f) *
                 Matrix.CreateScale(scale, scale, 1f) *
                 Matrix.CreateTranslation(offset.X, offset.Y, 0f) *
-                Camera.GetView(-10f) *
+                Camera.GetView(-scale) *
                 Matrix.CreateScale(1f / v.Width, 1f / v.Height, 1f);
         }
     }
