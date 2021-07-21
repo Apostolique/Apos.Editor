@@ -35,8 +35,8 @@ namespace GameProject {
         }
 
         public static void UpdateInput() {
-            if (MouseCondition.Scrolled() && !Triggers.SelectionCycle.Held(false)) {
-                Zoom = MathF.Min(MathF.Max(Zoom - MouseCondition.ScrollDelta * 0.001f, 0.2f), 4f);
+            if (MouseCondition.Scrolled()) {
+                _targetExp = MathHelper.Clamp(_targetExp - MouseCondition.ScrollDelta * _expDistance, _maxExp, _minExp);
             }
 
             if (Triggers.RotateLeft.Pressed()) {
@@ -62,8 +62,8 @@ namespace GameProject {
         }
 
         public static void Update() {
-            _camera.Z = _camera.ScaleToZ(InterpolateTowardsTarget(_camera.ZToScale(_camera.Z, 0f), _targetZoom, 0.1f, 0.0001f), 0f);
-            _camera.Rotation = InterpolateTowardsTarget(_camera.Rotation, _targetRotation, 0.1f, 0.0001f);
+            _camera.Z = _camera.ScaleToZ(ExpToScale(Interpolate(ScaleToExp(_camera.ZToScale(_camera.Z, 0f)), _targetExp, _speed, _snapDistance)), 0f);
+            _camera.Rotation = Interpolate(_camera.Rotation, _targetRotation, _speed, _snapDistance);
         }
 
         /// <summary>
@@ -74,7 +74,7 @@ namespace GameProject {
         /// <param name="target">The value to reach.</param>
         /// <param name="speed">A value between 0f and 1f.</param>
         /// <param name="snapNear">When the difference between the target and the result is smaller than this value, the target will be returned.</param>
-        private static float InterpolateTowardsTarget(float from, float target, float speed, float snapNear) {
+        private static float Interpolate(float from, float target, float speed, float snapNear) {
             float result = MathHelper.Lerp(from, target, speed);
 
             if (from < target) {
@@ -89,18 +89,25 @@ namespace GameProject {
                 return result;
             }
         }
-
-        private static float Zoom {
-            get => MathF.Log(_camera.ScaleToZ(_targetZoom, 0f) + 1);
-            set {
-                _targetZoom = _camera.ZToScale(MathF.Exp(value) - 1, 0f);
-            }
+        private static float ScaleToExp(float scale) {
+            return -MathF.Log(scale);
         }
+        private static float ExpToScale(float exp) {
+            return MathF.Exp(-exp);
+        }
+
         private static A.Camera _camera = null!;
         private static Vector2 _dragAnchor = Vector2.Zero;
         private static bool _isDragging = false;
 
-        private static float _targetZoom = 1f;
+        private static float _targetExp = 0f;
         private static float _targetRotation = 0f;
+
+        private static float _speed = 0.08f;
+        private static float _snapDistance = 0.001f;
+
+        private static float _expDistance = 0.002f;
+        private static float _maxExp = -2f;
+        private static float _minExp = 4f;
     }
 }
