@@ -26,7 +26,7 @@ namespace GameProject {
 
             _ui = new IMGUI();
 
-            _pathEditor = new PathEditor(_aabbTree);
+            _pathEditor = new PathEditor(_world.Woods);
 
             WindowResize(graphicsDevice.Viewport.Width, graphicsDevice.Viewport.Height);
         }
@@ -284,28 +284,75 @@ namespace GameProject {
         private void TypeEntity(uint id, int type) {
             Entity e = _entities[id];
             RectangleF oldInset = e.Inset;
+            var oldLayer = e.Layer;
 
             e.Type = type;
+
+            // TODO: Clean up this code.
+            if (oldLayer != e.Layer) {
+                if (oldLayer == World.LayerType.Lilypads) {
+                    e.Leaf3 = _world.Lilypads.Remove(e.Leaf3);
+                } else if (oldLayer == World.LayerType.Woods) {
+                    e.Leaf3 = _world.Woods.Remove(e.Leaf3);
+                    _pathEditor.RemoveFromPath((Rectangle)oldInset);
+                } else if (oldLayer == World.LayerType.Clouds) {
+                    e.Leaf3 = _world.Clouds.Remove(e.Leaf3);
+                }
+
+                if (e.Layer == World.LayerType.Lilypads) {
+                    e.Leaf3 = _world.Lilypads.Add(e.Rect, e);
+                } else if (e.Layer == World.LayerType.Woods) {
+                    e.Leaf3 = _world.Woods.Add(e.Rect, e);
+                    _pathEditor.AddToPath((Rectangle)e.Inset, e.IsNegative);
+                } else if (e.Layer == World.LayerType.Clouds) {
+                    e.Leaf3 = _world.Clouds.Add(e.Rect, e);
+                }
+            }
+
             UpdateEntityStorage(e, oldInset);
         }
         private void AddEntityStorage(Entity e) {
             _entities.Add(e.Id, e);
             e.Leaf1 = _aabbTree.Add(e.Rect, e);
 
-            _pathEditor.AddToPath((Rectangle)e.Inset, e.IsNegative);
+            // TODO: Clean up this code.
+            if (e.Layer == World.LayerType.Lilypads) {
+                e.Leaf3 = _world.Lilypads.Add(e.Rect, e);
+            } else if (e.Layer == World.LayerType.Woods) {
+                e.Leaf3 = _world.Woods.Add(e.Rect, e);
+                _pathEditor.AddToPath((Rectangle)e.Inset, e.IsNegative);
+            } else if (e.Layer == World.LayerType.Clouds) {
+                e.Leaf3 = _world.Clouds.Add(e.Rect, e);
+            }
         }
         private void RemoveEntityStorage(Entity e) {
             _entities.Remove(e.Id);
             e.Leaf1 = _aabbTree.Remove(e.Leaf1);
             e.Leaf2 = _selectedEntities.Remove(e.Leaf2);
 
-            _pathEditor.RemoveFromPath((Rectangle)e.Inset);
+            // TODO: Clean up this code.
+            if (e.Layer == World.LayerType.Lilypads) {
+                e.Leaf3 = _world.Lilypads.Remove(e.Leaf3);
+            } else if (e.Layer == World.LayerType.Woods) {
+                e.Leaf3 = _world.Woods.Remove(e.Leaf3);
+                _pathEditor.RemoveFromPath((Rectangle)e.Inset);
+            } else if (e.Layer == World.LayerType.Clouds) {
+                e.Leaf3 = _world.Clouds.Remove(e.Leaf3);
+            }
         }
         private void UpdateEntityStorage(Entity e, RectangleF oldInset) {
             _aabbTree.Update(e.Leaf1, e.Rect);
             if (e.Leaf2 != -1) _selectedEntities.Update(e.Leaf2, e.Rect);
 
-            _pathEditor.UpdatePath((Rectangle)oldInset, (Rectangle)e.Inset, e.IsNegative);
+            // TODO: Clean up this code.
+            if (e.Layer == World.LayerType.Lilypads) {
+                _world.Lilypads.Update(e.Leaf3, e.Rect);
+            } else if (e.Layer == World.LayerType.Woods) {
+                _world.Woods.Update(e.Leaf3, e.Rect);
+                _pathEditor.UpdatePath((Rectangle)oldInset, (Rectangle)e.Inset, e.IsNegative);
+            } else if (e.Layer == World.LayerType.Clouds) {
+                _world.Clouds.Update(e.Leaf3, e.Rect);
+            }
         }
 
         private void SingleHover() {

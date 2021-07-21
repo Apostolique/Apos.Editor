@@ -39,7 +39,11 @@ namespace GameProject {
             s.End();
         }
         public void Draw(SpriteBatch s) {
-            foreach (var e in AABBTree.Query(Camera.ViewRect).OrderBy(e => e))
+            foreach (var e in Lilypads.Query(Camera.ViewRect).OrderBy(e => e))
+                e.Draw(s);
+            foreach (var e in Woods.Query(Camera.ViewRect).OrderBy(e => e))
+                e.Draw(s);
+            foreach (var e in Clouds.Query(Camera.ViewRect).OrderBy(e => e))
                 e.Draw(s);
         }
 
