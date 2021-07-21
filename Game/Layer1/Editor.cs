@@ -182,21 +182,22 @@ namespace GameProject {
             Assets.Grid.Parameters["tex_transform"].SetValue(Matrix.Invert(Camera.View));
 
             float screenToWorld = Camera.ScreenToWorldScale;
+            Assets.Grid.Parameters["ps"].SetValue(screenToWorld);
 
-            Assets.Grid.Parameters["line_size"].SetValue(new Vector2(1f * screenToWorld));
+            Assets.Grid.Parameters["line_size"].SetValue(new Vector2(0f));
             float smallerGrid = gridSize / 2f;
             while (smallerGrid >= 8f * screenToWorld && smallerGrid >= minGrid) {
                 Assets.Grid.Parameters["grid_size"].SetValue(new Vector2(smallerGrid));
                 s.Begin(effect: Assets.Grid, samplerState: SamplerState.LinearWrap);
-                s.Draw(Assets.Pixel, Vector2.Zero, s.GraphicsDevice.Viewport.Bounds, color * 0.2f);
+                s.Draw(Assets.Pixel, Vector2.Zero, s.GraphicsDevice.Viewport.Bounds, color * 0.1f);
                 s.End();
                 smallerGrid /= 2f;
             }
 
-            Assets.Grid.Parameters["line_size"].SetValue(new Vector2(1f * screenToWorld));
+            Assets.Grid.Parameters["line_size"].SetValue(new Vector2(0f));
             Assets.Grid.Parameters["grid_size"].SetValue(new Vector2(gridSize));
             s.Begin(effect: Assets.Grid, samplerState: SamplerState.LinearWrap);
-            s.Draw(Assets.Pixel, Vector2.Zero, s.GraphicsDevice.Viewport.Bounds, color);
+            s.Draw(Assets.Pixel, Vector2.Zero, s.GraphicsDevice.Viewport.Bounds, color * 0.2f);
             s.End();
         }
 
