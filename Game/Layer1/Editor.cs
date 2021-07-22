@@ -551,6 +551,7 @@ namespace GameProject {
 
                     if (_selectedEntities.Count() == 1 && !_edit.IsDragged) {
                         _edit.Rect = first.Inset;
+                        _editRectInitialStartSize = first.Inset.Size;
                     }
                 }
             }
