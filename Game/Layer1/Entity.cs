@@ -9,9 +9,9 @@ namespace GameProject {
     public class Entity : IComparable<Entity> {
         public Entity(uint id, RectangleF r, uint order, int type) {
             Id = id;
+            Type = type;
             Inset = new RectangleF(r.X, r.Y, r.Width, r.Height);
             Order = order;
-            Type = type;
         }
 
         public uint Id { get; set; }
