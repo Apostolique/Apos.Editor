@@ -621,7 +621,6 @@ namespace GameProject {
             _historyHandler.AutoCommit = false;
             foreach (var e in all) {
                 HistoryRemoveEntity(e.Id, new RectangleF(e.Inset.Position, e.Inset.Size), e.Order, e.Type);
-                e.Leaf2 = _selectedEntities.Remove(e.Leaf2);
             }
             _historyHandler.Commit();
             _historyHandler.AutoCommit = true;
