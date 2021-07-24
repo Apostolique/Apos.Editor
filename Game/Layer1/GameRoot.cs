@@ -77,7 +77,7 @@ namespace GameProject {
             _editor.Draw(_s);
             _s.End();
 
-            var font = Assets.FontSystem.GetFont(30);
+            var font = Assets.FontSystem.GetFont(24);
             _s.Begin();
             // Draw UI
             _editor.DrawUI(_s, gameTime);
