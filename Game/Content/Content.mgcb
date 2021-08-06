@@ -25,6 +25,21 @@
 /processorParam:TextureFormat=Color
 /build:background.png
 
+#begin background2.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:background2.png
+
+#begin bleeders-meta.json
+/copy:bleeders-meta.json
+
 #begin bleeders.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -37,8 +52,8 @@
 /processorParam:TextureFormat=Color
 /build:bleeders.png
 
-#begin bleeders-meta.json
-/copy:bleeders-meta.json
+#begin clouds-meta.json
+/copy:clouds-meta.json
 
 #begin clouds.png
 /importer:TextureImporter
@@ -52,9 +67,6 @@
 /processorParam:TextureFormat=Color
 /build:clouds.png
 
-#begin clouds-meta.json
-/copy:clouds-meta.json
-
 #begin grid.fx
 /importer:EffectImporter
 /processor:EffectProcessor
@@ -67,6 +79,9 @@
 /processorParam:DebugMode=Auto
 /build:infinite.fx
 
+#begin lilypads-meta.json
+/copy:lilypads-meta.json
+
 #begin lilypads.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -78,9 +93,6 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:lilypads.png
-
-#begin lilypads-meta.json
-/copy:lilypads-meta.json
 
 #begin pixel.png
 /importer:TextureImporter
@@ -109,6 +121,9 @@
 /processorParam:TextureFormat=Color
 /build:Tiles.png
 
+#begin woods-meta.json
+/copy:woods-meta.json
+
 #begin woods.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -120,7 +135,4 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:woods.png
-
-#begin woods-meta.json
-/copy:woods-meta.json
 

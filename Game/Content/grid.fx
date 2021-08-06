@@ -8,7 +8,7 @@
 #endif
 
 sampler TextureSampler : register(s0);
-float2 line_size;
+float line_size;
 float2 grid_size;
 float4x4 view_projection;
 float4x4 tex_transform;
@@ -53,14 +53,14 @@ PixelInput SpriteVertexShader(VertexInput v) {
 }
 
 float4 SpritePixelShader(PixelInput p): COLOR0 {
-    float size = grid_size;
-    float halfSize = size * 0.5;
+    float2 size = grid_size;
+    float2 halfSize = size * 0.5;
     float aa = ps * 1.5;
     float lineSize = line_size * ps / 4.0;
 
     float x = p.TexCoord.x;
     float y = p.TexCoord.y;
-    float d = BoxSDF(float2(mod(x, size) - halfSize, mod(y, size) - halfSize), float2(halfSize, halfSize)) + lineSize;
+    float d = BoxSDF(float2(mod(x, size.x) - halfSize.x, mod(y, size.y) - halfSize.y), halfSize) + lineSize;
     d = Onion(d, lineSize);
 
     float4 c = p.Color * Antialias(d, aa);

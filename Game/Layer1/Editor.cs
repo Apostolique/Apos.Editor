@@ -184,7 +184,7 @@ namespace GameProject {
             float screenToWorld = Camera.ScreenToWorldScale;
             Assets.Grid.Parameters["ps"].SetValue(screenToWorld);
 
-            Assets.Grid.Parameters["line_size"].SetValue(new Vector2(0f));
+            Assets.Grid.Parameters["line_size"].SetValue(0f);
             float smallerGrid = gridSize / 2f;
             while (smallerGrid >= 8f * screenToWorld && smallerGrid >= minGrid) {
                 Assets.Grid.Parameters["grid_size"].SetValue(new Vector2(smallerGrid));
@@ -194,7 +194,7 @@ namespace GameProject {
                 smallerGrid /= 2f;
             }
 
-            Assets.Grid.Parameters["line_size"].SetValue(new Vector2(0f));
+            Assets.Grid.Parameters["line_size"].SetValue(0f);
             Assets.Grid.Parameters["grid_size"].SetValue(new Vector2(gridSize));
             s.Begin(effect: Assets.Grid, samplerState: SamplerState.LinearWrap);
             s.Draw(Assets.Pixel, Vector2.Zero, s.GraphicsDevice.Viewport.Bounds, color * 0.2f);
