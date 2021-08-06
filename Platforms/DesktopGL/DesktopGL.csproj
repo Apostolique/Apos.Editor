@@ -39,7 +39,7 @@
   </ItemGroup>
 
   <Target Name="Build Content" BeforeTargets="BeforeBuild">
-    <Exec Command="dotnet run -p ../Pipeline -- -i ../../Game/Assets -r $(OutDir) -o Assets -l ../../Game/Layer1" />
+    <Exec Command="dotnet run --project ../Pipeline -- -i ../../Game/Assets -r $(OutDir) -o Assets -l ../../Game/Layer1" />
   </Target>
 
   <Target Name="PublishDistFiles" AfterTargets="ComputeFilesToPublish">
