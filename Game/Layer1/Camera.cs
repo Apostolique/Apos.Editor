@@ -35,7 +35,7 @@ namespace GameProject {
         }
 
         public static void UpdateInput() {
-            if (MouseCondition.Scrolled()) {
+            if (MouseCondition.Scrolled() && !Triggers.SelectionCycle.Held(false)) {
                 _targetExp = MathHelper.Clamp(_targetExp - MouseCondition.ScrollDelta * _expDistance, _maxExp, _minExp);
             }
 
