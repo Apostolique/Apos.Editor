@@ -52,7 +52,7 @@ namespace GameProject {
                 Matrix.CreateScale(t.Width, t.Height, 1f) *
                 Matrix.CreateScale(scale, scale, 1f) *
                 Matrix.CreateTranslation(offset.X, offset.Y, 0f) *
-                Camera.GetView(-scale) *
+                Camera.GetView(-scale + 1) *
                 Matrix.CreateScale(1f / v.Width, 1f / v.Height, 1f);
         }
     }
