@@ -26,14 +26,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\Game\Layer0\**\*.cs">
-      <Link>Layer0\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    <Compile Include="../../Game/Layer0/**/*.cs">
+      <Link>Layer0/%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Compile>
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\Game\Layer1\**\*.cs">
-      <Link>Layer1\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    <Compile Include="../../Game/Layer1/**/*.cs">
+      <Link>Layer1/%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Compile>
   </ItemGroup>
 
@@ -43,11 +43,11 @@
 
   <Target Name="PublishDistFiles" AfterTargets="ComputeFilesToPublish">
     <ItemGroup>
-      <AssetsFiles Include="$(OutDir)Assets\**" />
+      <AssetsFiles Include="$(OutDir)Assets/**" />
     </ItemGroup>
     <Copy
       SourceFiles="@(AssetsFiles)"
-      DestinationFolder="$(PublishDir)Assets\%(RecursiveDir)"
+      DestinationFolder="$(PublishDir)Assets/%(RecursiveDir)"
       SkipUnchangedFiles="true"
       OverwriteReadOnlyFiles="true"
       Retries="3"
@@ -55,8 +55,8 @@
   </Target>
 
   <ItemGroup>
-    <MonoGameContentReference Include="..\..\Game\Content\**\*.mgcb">
-      <Link>Content\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    <MonoGameContentReference Include="../../Game/Content/**/*.mgcb">
+      <Link>Content/%(RecursiveDir)%(Filename)%(Extension)</Link>
     </MonoGameContentReference>
   </ItemGroup>
 
