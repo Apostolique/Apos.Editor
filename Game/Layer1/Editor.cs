@@ -295,6 +295,7 @@ namespace GameProject {
                     e.Leaf3 = _world.Lilypads.Remove(e.Leaf3);
                 } else if (oldLayer == World.LayerType.Woods) {
                     e.Leaf3 = _world.Woods.Remove(e.Leaf3);
+                    // TODO: Can't cast, need to round to nearest int for all sides (left, top, right, bottom)
                     _pathEditor.RemoveFromPath((Rectangle)oldInset);
                 } else if (oldLayer == World.LayerType.Clouds) {
                     e.Leaf3 = _world.Clouds.Remove(e.Leaf3);
@@ -304,6 +305,7 @@ namespace GameProject {
                     e.Leaf3 = _world.Lilypads.Add(e.Rect, e);
                 } else if (e.Layer == World.LayerType.Woods) {
                     e.Leaf3 = _world.Woods.Add(e.Rect, e);
+                    // TODO: Can't cast, need to round to nearest int for all sides (left, top, right, bottom)
                     _pathEditor.AddToPath((Rectangle)e.Inset, e.IsNegative);
                 } else if (e.Layer == World.LayerType.Clouds) {
                     e.Leaf3 = _world.Clouds.Add(e.Rect, e);
@@ -321,6 +323,7 @@ namespace GameProject {
                 e.Leaf3 = _world.Lilypads.Add(e.Rect, e);
             } else if (e.Layer == World.LayerType.Woods) {
                 e.Leaf3 = _world.Woods.Add(e.Rect, e);
+                // TODO: Can't cast, need to round to nearest int for all sides (left, top, right, bottom)
                 _pathEditor.AddToPath((Rectangle)e.Inset, e.IsNegative);
             } else if (e.Layer == World.LayerType.Clouds) {
                 e.Leaf3 = _world.Clouds.Add(e.Rect, e);
@@ -336,6 +339,7 @@ namespace GameProject {
                 e.Leaf3 = _world.Lilypads.Remove(e.Leaf3);
             } else if (e.Layer == World.LayerType.Woods) {
                 e.Leaf3 = _world.Woods.Remove(e.Leaf3);
+                // TODO: Can't cast, need to round to nearest int for all sides (left, top, right, bottom)
                 _pathEditor.RemoveFromPath((Rectangle)e.Inset);
             } else if (e.Layer == World.LayerType.Clouds) {
                 e.Leaf3 = _world.Clouds.Remove(e.Leaf3);
@@ -350,6 +354,7 @@ namespace GameProject {
                 _world.Lilypads.Update(e.Leaf3, e.Rect);
             } else if (e.Layer == World.LayerType.Woods) {
                 _world.Woods.Update(e.Leaf3, e.Rect);
+                // TODO: Can't cast, need to round to nearest int for all sides (left, top, right, bottom)
                 _pathEditor.UpdatePath((Rectangle)oldInset, (Rectangle)e.Inset, e.IsNegative);
             } else if (e.Layer == World.LayerType.Clouds) {
                 _world.Clouds.Update(e.Leaf3, e.Rect);

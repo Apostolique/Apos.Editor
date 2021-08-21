@@ -42,6 +42,7 @@ namespace GameProject {
             AddAposPath(r, true, isVertical: false);
 
             foreach (var e in _paths.Query(r).OrderBy(e => e.IsNegative ? 1 : 0)) {
+                // TODO: Can't cast, need to round to nearest int for all sides (left, top, right, bottom)
                 Rectangle er = (Rectangle)e.Inset;
                 Rectangle result = Intersection(ref r, ref er);
                 AddAposPath(result, e.IsNegative, isVertical: true);
@@ -54,6 +55,7 @@ namespace GameProject {
 
             if (!isNegative) {
                 foreach (var e in _paths.Query(r).Where(e => e.IsNegative)) {
+                    // TODO: Can't cast, need to round to nearest int for all sides (left, top, right, bottom)
                     Rectangle er = (Rectangle)e.Inset;
                     Rectangle result = Intersection(ref r, ref er);
                     AddAposPath(result, true, isVertical: true);
