@@ -5,6 +5,7 @@ using Apos.Gui;
 using FontStashSharp;
 using System;
 using MonoGame.Extended;
+using Apos.Tweens;
 
 namespace GameProject {
     public class GameRoot : Game {
@@ -54,6 +55,7 @@ namespace GameProject {
 
         protected override void Update(GameTime gameTime) {
             GuiHelper.UpdateSetup();
+            TweenHelper.UpdateSetup(gameTime);
 
             if (Triggers.ResetDroppedFrames.Pressed()) _fps.DroppedFrames = 0;
             _fps.Update(gameTime);

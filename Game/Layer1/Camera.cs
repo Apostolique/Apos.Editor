@@ -4,6 +4,7 @@ using A = Apos.Camera;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
+using Apos.Tweens;
 
 namespace GameProject {
     public static class Camera {
@@ -36,14 +37,20 @@ namespace GameProject {
 
         public static void UpdateInput() {
             if (MouseCondition.Scrolled() && !Triggers.SelectionCycle.Held(false)) {
-                _targetExp = MathHelper.Clamp(_targetExp - MouseCondition.ScrollDelta * _expDistance, _maxExp, _minExp);
+                var a = _exp.Value;
+                var b = MathHelper.Clamp(_exp.B - MouseCondition.ScrollDelta * _expDistance, _maxExp, _minExp);
+                _exp = new FloatTween(a, b, GetDuration(a, b, _speed, _maxDuration), Easing.ExpoOut);
             }
 
             if (Triggers.RotateLeft.Pressed()) {
-                _targetRotation += MathHelper.PiOver4;
+                var a = _rotation.Value;
+                var b = _rotation.B + MathHelper.PiOver4;
+                _rotation = new FloatTween(a, b, GetDuration(a, b, _speed, _maxDuration), Easing.ExpoOut);
             }
             if (Triggers.RotateRight.Pressed()) {
-                _targetRotation -= MathHelper.PiOver4;
+                var a = _rotation.Value;
+                var b = _rotation.B - MathHelper.PiOver4;
+                _rotation = new FloatTween(a, b, GetDuration(a, b, _speed, _maxDuration), Easing.ExpoOut);
             }
 
             MouseWorld = _camera.ScreenToWorld(InputHelper.NewMouse.X, InputHelper.NewMouse.Y);
@@ -62,33 +69,10 @@ namespace GameProject {
         }
 
         public static void Update() {
-            _camera.Z = _camera.ScaleToZ(ExpToScale(Interpolate(ScaleToExp(_camera.ZToScale(_camera.Z, 0f)), _targetExp, _speed, _snapDistance)), 0f);
-            _camera.Rotation = Interpolate(_camera.Rotation, _targetRotation, _speed, _snapDistance);
+            _camera.Z = _camera.ScaleToZ(ExpToScale(_exp.Value), 0f);
+            _camera.Rotation = _rotation.Value;
         }
 
-        /// <summary>
-        /// Poor man's tweening function.
-        /// If the result is stored in the `from` value, it will create a nice interpolation over multiple frames.
-        /// </summary>
-        /// <param name="from">The value to start from.</param>
-        /// <param name="target">The value to reach.</param>
-        /// <param name="speed">A value between 0f and 1f.</param>
-        /// <param name="snapNear">When the difference between the target and the result is smaller than this value, the target will be returned.</param>
-        private static float Interpolate(float from, float target, float speed, float snapNear) {
-            float result = MathHelper.Lerp(from, target, speed);
-
-            if (from < target) {
-                result = MathHelper.Clamp(result, from, target);
-            } else {
-                result = MathHelper.Clamp(result, target, from);
-            }
-
-            if (MathF.Abs(target - result) < snapNear) {
-                return target;
-            } else {
-                return result;
-            }
-        }
         private static float ScaleToExp(float scale) {
             return -MathF.Log(scale);
         }
@@ -96,15 +80,19 @@ namespace GameProject {
             return MathF.Exp(-exp);
         }
 
+        private static long GetDuration(float a, float b, float speed, long maxDuration) {
+            return (long)MathF.Min(MathF.Abs((b - a) / speed), maxDuration);
+        }
+
         private static A.Camera _camera = null!;
         private static Vector2 _dragAnchor = Vector2.Zero;
         private static bool _isDragging = false;
 
-        private static float _targetExp = 0f;
-        private static float _targetRotation = 0f;
+        private static ITween<float> _exp = new WaitTween<float>(0, 0);
+        private static ITween<float> _rotation = new WaitTween<float>(0, 0);
 
-        private static float _speed = 0.08f;
-        private static float _snapDistance = 0.001f;
+        private static float _speed = 0.0007f;
+        private static long _maxDuration = 3000;
 
         private static float _expDistance = 0.002f;
         private static float _maxExp = -2f;
