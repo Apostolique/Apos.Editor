@@ -2,8 +2,10 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net6-windows</TargetFramework>
     <AssemblyName>Apos.Editor</AssemblyName>
+    <ApplicationIcon>Icon.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
     <MonoGamePlatform>Windows</MonoGamePlatform>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
@@ -13,8 +15,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.0.1641" />
-    <PackageReference Include="MonoGame.Framework.WindowsDX" Version="3.8.0.1641" />
+    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303" />
+    <PackageReference Include="MonoGame.Framework.WindowsDX" Version="3.8.1.303" />
     <PackageReference Include="MonoGame.Extended" Version="3.8.0" />
     <PackageReference Include="Apos.Content.Read" Version="0.1.1" />
     <PackageReference Include="Apos.Input" Version="2.4.1" />
@@ -60,5 +62,10 @@
       <Link>Content/%(RecursiveDir)%(Filename)%(Extension)</Link>
     </MonoGameContentReference>
   </ItemGroup>
+
+  <Target Name="RestoreDotnetTools" BeforeTargets="Restore">
+    <Message Text="Restoring dotnet tools" Importance="High" />
+    <Exec Command="dotnet tool restore" />
+  </Target>
 
 </Project>
